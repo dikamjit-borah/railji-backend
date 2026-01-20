@@ -5,8 +5,8 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"],
-      "@libs": ["../../libs/shared/src/index.ts"],
-      "@libs/*": ["../../libs/shared/src/*"]
+      "@libs": ["../../libs/shared/dist/index.js"],
+      "@libs/*": ["../../libs/shared/dist/*"]
     }
   },
   "include": ["src/**/*"],

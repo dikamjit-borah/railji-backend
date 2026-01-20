@@ -10,11 +10,12 @@
     "libs/shared"
   ],
   "scripts": {
+    "build:shared": "cd libs/shared && npm run build",
     "build:business": "cd apps/railji-business && npm run build",
     "build:dashboard": "cd apps/railji-dashboard && npm run build",
-    "build": "npm run build:business && npm run build:dashboard",
-    "start:business": "cd apps/railji-business && npm run start",
-    "start:dashboard": "cd apps/railji-dashboard && npm run start",
+    "build": "npm run build:shared && npm run build:business && npm run build:dashboard",
+    "start:business": "cd apps/railji-business && npm run start:prod",
+    "start:dashboard": "cd apps/railji-dashboard && npm run start:prod",
     "dev:business": "cd apps/railji-business && npm run start:dev",
     "dev:dashboard": "cd apps/railji-dashboard && npm run start:dev",
     "lint": "npm run lint:business && npm run lint:dashboard",
