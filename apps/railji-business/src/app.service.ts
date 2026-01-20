@@ -2,15 +2,18 @@ import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class AppService {
-  getHello(): { message: string } {
+  getHello(): { status: string; service: string; timestamp: string } {
     return {
-      message: 'Welcome to Railji Business API',
+      status: 'ok',
+      service: 'Railji Business API',
+      timestamp: new Date().toISOString(),
     };
   }
 
-  getHealth(): { status: string; timestamp: string } {
+  getHealth(): { status: string; service: string; timestamp: string } {
     return {
       status: 'ok',
+      service: 'Railji Business API',
       timestamp: new Date().toISOString(),
     };
   }

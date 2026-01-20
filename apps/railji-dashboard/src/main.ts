@@ -32,9 +32,9 @@ async function bootstrap() {
   // Global prefix
   app.setGlobalPrefix('api/v1');
 
-  await app.listen(config.app.port, () => {
+  await app.listen(config.app.port, '0.0.0.0', () => {
     loggerService.log(
-      `Railji Dashboard running on http://localhost:${config.app.port}`,
+      `Railji Dashboard running on port ${config.app.port}`,
       'Bootstrap',
     );
     loggerService.log(`Environment: ${config.app.env}`, 'Bootstrap');
