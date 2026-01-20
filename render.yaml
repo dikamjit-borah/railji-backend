@@ -4,7 +4,7 @@ services:
     name: railji-business
     env: node
     plan: free
-    buildCommand: npm run build:shared && npm run build:business
+    buildCommand: npm install && npm run build:shared && npm run build:business
     startCommand: cd apps/railji-business && npm install --omit=dev && node dist/main.js
     envVars:
       - key: NODE_ENV
@@ -26,7 +26,7 @@ services:
     name: railji-dashboard
     env: node
     plan: free
-    buildCommand: npm run build:shared && npm run build:dashboard
+    buildCommand: npm install && npm run build:shared && npm run build:dashboard
     startCommand: cd apps/railji-dashboard && npm install --omit=dev && node dist/main.js
     envVars:
       - key: NODE_ENV
