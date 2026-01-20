@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
-import { LoggerServiceProvider } from '../../libs/shared/dist';
+import { LoggerServiceProvider } from '@libs';
 import { config } from './config/config';
 
 async function bootstrap() {

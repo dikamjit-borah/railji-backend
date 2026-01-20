@@ -10,7 +10,7 @@ import {
   ErrorInterceptor,
   HttpExceptionFilter,
   LoggerServiceProvider,
-} from '../../libs/shared/dist';
+} from '@libs';
 import { config } from './config/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';

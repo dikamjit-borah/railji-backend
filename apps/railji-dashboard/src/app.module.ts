@@ -9,7 +9,7 @@ import {
   ResponseInterceptor,
   ErrorInterceptor,
   HttpExceptionFilter,
-} from '../../libs/shared/dist';
+} from '@libs';
 import { config } from './config/config';
 
 @Module({
