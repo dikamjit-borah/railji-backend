@@ -1,8 +1,17 @@
-import { IsString, IsOptional, IsMongoId } from 'class-validator';
+import { IsString, IsOptional, IsMongoId, IsNumber } from 'class-validator';
 
 export class CreateExamDto {
   @IsString()
-  title: string;
+  examName: string;
+
+  @IsString()
+  examPosition: string;
+
+  @IsString()
+  examDepartment: string;
+
+  @IsNumber()
+  totalQuestions: number;
 
   @IsString()
   @IsOptional()
