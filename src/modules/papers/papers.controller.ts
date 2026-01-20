@@ -9,7 +9,11 @@ import {
   Query,
   HttpStatus,
   HttpCode,
+  UseInterceptors,
+  UploadedFiles,
+  BadRequestException,
 } from '@nestjs/common';
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { PapersService } from './papers.service';
 import { CreatePaperDto, UpdatePaperDto } from './dto/paper.dto';
 
@@ -19,8 +23,21 @@ export class PapersController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  async create(@Body() createPaperDto: CreatePaperDto) {
-    const paper = await this.papersService.create(createPaperDto);
+  @UseInterceptors(
+    FileFieldsInterceptor([
+      { name: 'questionKey', maxCount: 1 },
+      { name: 'answerKey', maxCount: 1 },
+    ]),
+  )
+  async create(
+    @Body() createPaperDto: CreatePaperDto,
+    @UploadedFiles() files: { questionKey?: Express.Multer.File[]; answerKey?: Express.Multer.File[] },
+  ) {
+    if (!files?.questionKey || !files?.answerKey) {
+      throw new BadRequestException('Both questionKey and answerKey PDF files are required');
+    }
+
+    const paper = await this.papersService.create(createPaperDto, files.questionKey[0], files.answerKey[0]);
     return {
       message: 'Paper created successfully',
       data: paper,

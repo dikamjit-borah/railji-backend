@@ -15,14 +15,47 @@ export class PapersService {
 
   constructor(@InjectModel(Paper.name) private paperModel: Model<Paper>) {}
 
-  async create(createPaperDto: CreatePaperDto): Promise<Paper> {
+  async create(
+    createPaperDto: CreatePaperDto,
+    questionKeyFile: Express.Multer.File,
+    answerKeyFile: Express.Multer.File,
+  ): Promise<Paper> {
     try {
-      const paper = await this.paperModel.create(createPaperDto);
+      // Dummy S3 upload calls
+      const questionKeyUrl = await this.uploadToS3(questionKeyFile, 'question-keys');
+      const answerKeyUrl = await this.uploadToS3(answerKeyFile, 'answer-keys');
+
+      this.logger.log(`Uploaded question key to S3: ${questionKeyUrl}`);
+      this.logger.log(`Uploaded answer key to S3: ${answerKeyUrl}`);
+
+      const paperData = {
+        ...createPaperDto,
+        questionKeyUrl,
+        answerKeyUrl,
+      };
+
+      const paper = await this.paperModel.create(paperData);
       this.logger.log(`Paper created with ID: ${paper._id}`);
       return paper;
     } catch (error) {
       this.logger.error(`Error creating paper: ${error.message}`, error.stack);
       throw new BadRequestException('Failed to create paper');
+    }
+  }
+
+  private async uploadToS3(file: Express.Multer.File, folder: string): Promise<string> {
+    // Dummy S3 upload implementation
+    try {
+      const filename = `${folder}/${Date.now()}-${file.originalname}`;
+      this.logger.log(`Uploading file to S3: ${filename}`);
+
+      // Dummy call - replace with actual AWS SDK call
+      const s3Url = `https://your-s3-bucket.s3.amazonaws.com/${filename}`;
+
+      return s3Url;
+    } catch (error) {
+      this.logger.error(`Error uploading to S3: ${error.message}`, error.stack);
+      throw new BadRequestException('Failed to upload file to S3');
     }
   }
 
