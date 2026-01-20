@@ -1,7 +1,37 @@
 {
   "collection": "@nestjs/schematics",
-  "sourceRoot": "src",
+  "monorepo": true,
+  "root": "apps",
   "compilerOptions": {
     "deleteOutDir": true
+  },
+  "projects": {
+    "railji-business": {
+      "type": "application",
+      "root": "apps/railji-business",
+      "entryFile": "main",
+      "sourceRoot": "apps/railji-business/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/railji-business/tsconfig.json"
+      }
+    },
+    "railji-dashboard": {
+      "type": "application",
+      "root": "apps/railji-dashboard",
+      "entryFile": "main",
+      "sourceRoot": "apps/railji-dashboard/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/railji-dashboard/tsconfig.json"
+      }
+    },
+    "shared": {
+      "type": "library",
+      "root": "libs/shared",
+      "entryFile": "src/index",
+      "sourceRoot": "libs/shared/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/shared/tsconfig.json"
+      }
+    }
   }
 }

@@ -8,8 +8,7 @@
     "allowSyntheticDefaultImports": true,
     "target": "ES2021",
     "sourceMap": true,
-    "outDir": "./dist",
-    "baseUrl": "./",
+    "baseUrl": ".",
     "incremental": true,
     "skipLibCheck": true,
     "strictNullChecks": false,
@@ -20,9 +19,12 @@
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "paths": {
-      "@/*": ["src/*"]
+      "@libs": ["libs/shared/src/index.ts"],
+      "@libs/*": ["libs/shared/src/*"],
+      "@railji-business/*": ["apps/railji-business/src/*"],
+      "@railji-dashboard/*": ["apps/railji-dashboard/src/*"]
     }
   },
-  "include": ["src/**/*"],
+  "include": ["apps/**/*", "libs/**/*"],
   "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
 }
