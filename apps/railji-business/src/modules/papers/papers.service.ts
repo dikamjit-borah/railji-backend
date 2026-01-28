@@ -58,13 +58,13 @@ export class PapersService {
     }
   }
 
-  async findByExamId(examId: string): Promise<Paper[]> {
+  async findByDepartmentId(departmentId: string): Promise<Paper[]> {
     try {
       const papers = await this.paperModel
-        .find({ examId })
-        .populate('examId')
+        .find({ departmentId })
+        .populate('departmentId')
         .exec();
-      this.logger.log(`Found ${papers.length} papers for exam ${examId}`);
+      this.logger.log(`Found ${papers.length} papers for exam ${departmentId}`);
       return papers;
     } catch (error) {
       this.logger.error(
@@ -75,38 +75,25 @@ export class PapersService {
     }
   }
 
-  async update(id: string, updatePaperDto: UpdatePaperDto): Promise<Paper> {
+  async update(
+    paperId: string,
+    updatePaperDto: UpdatePaperDto,
+  ): Promise<Paper> {
     try {
       const paper = await this.paperModel
-        .findByIdAndUpdate(id, updatePaperDto, { new: true })
-        .populate('examId')
+        .findByIdAndUpdate(paperId, updatePaperDto, { new: true })
+        .populate('paperId')
         .exec();
       if (!paper) {
-        this.logger.warn(`Paper not found for update with ID: ${id}`);
-        throw new NotFoundException(`Paper with ID ${id} not found`);
+        this.logger.warn(`Paper not found for update with ID: ${paperId}`);
+        throw new NotFoundException(`Paper with ID ${paperId} not found`);
       }
-      this.logger.log(`Paper updated with ID: ${id}`);
+      this.logger.log(`Paper updated with ID: ${paperId}`);
       return paper;
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Error updating paper: ${error.message}`, error.stack);
       throw new BadRequestException('Failed to update paper');
-    }
-  }
-
-  async delete(id: string): Promise<{ message: string }> {
-    try {
-      const paper = await this.paperModel.findByIdAndDelete(id).exec();
-      if (!paper) {
-        this.logger.warn(`Paper not found for deletion with ID: ${id}`);
-        throw new NotFoundException(`Paper with ID ${id} not found`);
-      }
-      this.logger.log(`Paper deleted with ID: ${id}`);
-      return { message: 'Paper deleted successfully' };
-    } catch (error) {
-      if (error instanceof NotFoundException) throw error;
-      this.logger.error(`Error deleting paper: ${error.message}`, error.stack);
-      throw new BadRequestException('Failed to delete paper');
     }
   }
 }

@@ -3,7 +3,6 @@ import {
   Get,
   Post,
   Put,
-  Delete,
   Body,
   Param,
   Query,
@@ -37,46 +36,26 @@ export class PapersController {
     };
   }
 
-  @Get('exam/:examId')
+  @Get(':departmentId')
   @HttpCode(HttpStatus.OK)
-  async findByExamId(@Param('examId') examId: string) {
-    const papers = await this.papersService.findByExamId(examId);
+  async findByDepartmentId(@Param('departmentId') departmentId: string) {
+    const papers = await this.papersService.findByDepartmentId(departmentId);
     return {
       message: 'Papers retrieved successfully',
       data: papers,
     };
   }
 
-  @Get(':id')
-  @HttpCode(HttpStatus.OK)
-  async findById(@Param('id') id: string) {
-    const paper = await this.papersService.findById(id);
-    return {
-      message: 'Paper retrieved successfully',
-      data: paper,
-    };
-  }
-
-  @Put(':id')
+  @Put(':paperId')
   @HttpCode(HttpStatus.OK)
   async update(
-    @Param('id') id: string,
+    @Param('paperId') paperId: string,
     @Body() updatePaperDto: UpdatePaperDto,
   ) {
-    const paper = await this.papersService.update(id, updatePaperDto);
+    const paper = await this.papersService.update(paperId, updatePaperDto);
     return {
       message: 'Paper updated successfully',
       data: paper,
-    };
-  }
-
-  @Delete(':id')
-  @HttpCode(HttpStatus.OK)
-  async delete(@Param('id') id: string) {
-    const result = await this.papersService.delete(id);
-    return {
-      message: result.message,
-      data: null,
     };
   }
 }
