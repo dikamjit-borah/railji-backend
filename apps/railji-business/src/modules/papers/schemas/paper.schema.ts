@@ -1,25 +1,49 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 
-@Schema({ timestamps: true })
+@Schema({ collection: 'papers', timestamps: true })
 export class Paper extends Document {
+  @Prop({ type: Types.ObjectId, ref: 'Department', required: true })
+  departmentId: Types.ObjectId;
+
   @Prop({ required: true })
-  title: string;
+  paperCode: string;
+
+  @Prop({ required: true })
+  name: string;
 
   @Prop()
   description: string;
 
-  @Prop({ type: Types.ObjectId, ref: 'Exam', required: true })
-  examId: Types.ObjectId;
+  @Prop({ required: true })
+  year: number;
 
-  @Prop()
-  subject: string;
+  @Prop({ required: true })
+  shift: string;
 
-  @Prop()
+  @Prop({ required: true })
+  examType: string;
+
+  @Prop({ type: [String], required: true })
+  sections: string[];
+
+  @Prop({ required: true })
   totalQuestions: number;
 
-  @Prop()
+  @Prop({ required: true })
   duration: number;
+
+  @Prop({ required: true })
+  passMarks: number;
+
+  @Prop({ default: 0 })
+  rating: number;
+
+  @Prop({ default: false })
+  isFree: boolean;
+
+  @Prop({ default: true })
+  isNew: boolean;
 
   @Prop({ default: Date.now })
   createdAt: Date;
@@ -29,3 +53,5 @@ export class Paper extends Document {
 }
 
 export const PaperSchema = SchemaFactory.createForClass(Paper);
+
+

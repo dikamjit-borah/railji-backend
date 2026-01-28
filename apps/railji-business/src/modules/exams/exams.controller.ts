@@ -2,8 +2,6 @@ import {
   Controller,
   Get,
   Post,
-  Put,
-  Delete,
   Body,
   Param,
   Query,
@@ -11,59 +9,64 @@ import {
   HttpCode,
 } from '@nestjs/common';
 import { ExamsService } from './exams.service';
-import { CreateExamDto, UpdateExamDto } from './dto/exam.dto';
+import { SubmitExamDto, StartExamDto } from './dto/exam.dto';
 
 @Controller('exams')
 export class ExamsController {
   constructor(private readonly examsService: ExamsService) {}
 
-  @Post()
-  @HttpCode(HttpStatus.CREATED)
-  async create(@Body() createExamDto: CreateExamDto) {
-    const exam = await this.examsService.create(createExamDto);
-    return {
-      message: 'Exam created successfully',
-      data: exam,
-    };
-  }
-
+  // GET /exams - List available published exams
   @Get()
   @HttpCode(HttpStatus.OK)
-  async findAll(@Query() query?: any) {
-    const exams = await this.examsService.findAll(query);
+  async findAllPublished() {
+    const exams = await this.examsService.findAllPublished();
     return {
       message: 'Exams retrieved successfully',
       data: exams,
     };
   }
 
+  // GET /exams/:id - Get exam details (without correct answers)
   @Get(':id')
   @HttpCode(HttpStatus.OK)
   async findById(@Param('id') id: string) {
-    const exam = await this.examsService.findById(id);
+    const exam = await this.examsService.findPublishedById(id);
     return {
       message: 'Exam retrieved successfully',
       data: exam,
     };
   }
 
-  @Put(':id')
+  // POST /exams/:id/start - Start exam session
+  @Post(':id/start')
   @HttpCode(HttpStatus.OK)
-  async update(@Param('id') id: string, @Body() updateExamDto: UpdateExamDto) {
-    const exam = await this.examsService.update(id, updateExamDto);
+  async startExam(@Param('id') id: string, @Body() startExamDto: StartExamDto) {
+    const session = await this.examsService.startExam(id, startExamDto.userId);
     return {
-      message: 'Exam updated successfully',
-      data: exam,
+      message: 'Exam session started successfully',
+      data: session,
     };
   }
 
-  @Delete(':id')
+  // POST /exams/:id/submit - Submit exam answers
+  @Post(':id/submit')
   @HttpCode(HttpStatus.OK)
-  async delete(@Param('id') id: string) {
-    const result = await this.examsService.delete(id);
+  async submitExam(@Param('id') id: string, @Body() submitExamDto: SubmitExamDto) {
+    const result = await this.examsService.submitExam(id, submitExamDto);
     return {
-      message: result.message,
-      data: null,
+      message: 'Exam submitted successfully',
+      data: result,
+    };
+  }
+
+  // GET /exams/:id/results - Get exam results for a user
+  @Get(':id/results')
+  @HttpCode(HttpStatus.OK)
+  async getResults(@Param('id') id: string, @Query('userId') userId: string) {
+    const results = await this.examsService.getExamResults(id, userId);
+    return {
+      message: 'Exam results retrieved successfully',
+      data: results,
     };
   }
 }

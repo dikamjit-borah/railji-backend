@@ -3,7 +3,6 @@ import {
   Get,
   Post,
   Put,
-  Delete,
   Body,
   Param,
   Query,
@@ -37,46 +36,53 @@ export class PapersController {
     };
   }
 
-  @Get('exam/:examId')
+  @Get(':departmentId')
   @HttpCode(HttpStatus.OK)
-  async findByExamId(@Param('examId') examId: string) {
-    const papers = await this.papersService.findByExamId(examId);
+  async fetchPapersForDepartment(@Param('departmentId') departmentId: string) {
+    const papers =
+      await this.papersService.fetchPapersForDepartment(departmentId);
     return {
       message: 'Papers retrieved successfully',
       data: papers,
     };
   }
 
-  @Get(':id')
+  @Get(':paperId')
   @HttpCode(HttpStatus.OK)
-  async findById(@Param('id') id: string) {
-    const paper = await this.papersService.findById(id);
+  async fetchQuestionsForPaper(@Param('paperId') paperId: string) {
+    const questions = await this.papersService.fetchQuestionsForPaper(paperId);
     return {
-      message: 'Paper retrieved successfully',
-      data: paper,
+      message: 'Questions retrieved successfully',
+      data: questions,
     };
   }
 
-  @Put(':id')
+  @Get(':paperId/questions/:questionId')
+  @HttpCode(HttpStatus.OK)
+  async fetchQuestionForPaper(
+    @Param('paperId') paperId: string,
+    @Param('questionId') questionId: string,
+  ) {
+    const question = await this.papersService.fetchQuestionForPaper(
+      paperId,
+      questionId,
+    );
+    return {
+      message: 'Question retrieved successfully',
+      data: question,
+    };
+  }
+
+  @Put(':paperId')
   @HttpCode(HttpStatus.OK)
   async update(
-    @Param('id') id: string,
+    @Param('paperId') paperId: string,
     @Body() updatePaperDto: UpdatePaperDto,
   ) {
-    const paper = await this.papersService.update(id, updatePaperDto);
+    const paper = await this.papersService.update(paperId, updatePaperDto);
     return {
       message: 'Paper updated successfully',
       data: paper,
-    };
-  }
-
-  @Delete(':id')
-  @HttpCode(HttpStatus.OK)
-  async delete(@Param('id') id: string) {
-    const result = await this.papersService.delete(id);
-    return {
-      message: result.message,
-      data: null,
     };
   }
 }
