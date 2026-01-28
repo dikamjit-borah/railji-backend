@@ -38,11 +38,38 @@ export class PapersController {
 
   @Get(':departmentId')
   @HttpCode(HttpStatus.OK)
-  async findByDepartmentId(@Param('departmentId') departmentId: string) {
-    const papers = await this.papersService.findByDepartmentId(departmentId);
+  async fetchPapersForDepartment(@Param('departmentId') departmentId: string) {
+    const papers =
+      await this.papersService.fetchPapersForDepartment(departmentId);
     return {
       message: 'Papers retrieved successfully',
       data: papers,
+    };
+  }
+
+  @Get(':paperId')
+  @HttpCode(HttpStatus.OK)
+  async fetchQuestionsForPaper(@Param('paperId') paperId: string) {
+    const questions = await this.papersService.fetchQuestionsForPaper(paperId);
+    return {
+      message: 'Questions retrieved successfully',
+      data: questions,
+    };
+  }
+
+  @Get(':paperId/questions/:questionId')
+  @HttpCode(HttpStatus.OK)
+  async fetchQuestionForPaper(
+    @Param('paperId') paperId: string,
+    @Param('questionId') questionId: string,
+  ) {
+    const question = await this.papersService.fetchQuestionForPaper(
+      paperId,
+      questionId,
+    );
+    return {
+      message: 'Question retrieved successfully',
+      data: question,
     };
   }
 

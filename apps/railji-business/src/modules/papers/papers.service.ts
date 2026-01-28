@@ -58,13 +58,50 @@ export class PapersService {
     }
   }
 
-  async findByDepartmentId(departmentId: string): Promise<Paper[]> {
+  async fetchPapersForDepartment(departmentId: string): Promise<Paper[]> {
     try {
       const papers = await this.paperModel
         .find({ departmentId })
         .populate('departmentId')
         .exec();
       this.logger.log(`Found ${papers.length} papers for exam ${departmentId}`);
+      return papers;
+    } catch (error) {
+      this.logger.error(
+        `Error finding papers by exam: ${error.message}`,
+        error.stack,
+      );
+      throw new BadRequestException('Failed to fetch papers');
+    }
+  }
+
+  async fetchQuestionsForPaper(paperId: string): Promise<Paper[]> {
+    try {
+      const papers = await this.paperModel
+        .find({ paperId })
+        .populate('paperId')
+        .exec();
+      this.logger.log(`Found ${papers.length} papers for exam ${paperId}`);
+      return papers;
+    } catch (error) {
+      this.logger.error(
+        `Error finding papers by exam: ${error.message}`,
+        error.stack,
+      );
+      throw new BadRequestException('Failed to fetch papers');
+    }
+  }
+
+  async fetchQuestionForPaper(
+    paperId: string,
+    questionId: string,
+  ): Promise<Paper[]> {
+    try {
+      const papers = await this.paperModel
+        .find({ paperId, questionId })
+        .populate('paperId')
+        .exec();
+      this.logger.log(`Found ${papers.length} papers for exam ${paperId}`);
       return papers;
     } catch (error) {
       this.logger.error(
