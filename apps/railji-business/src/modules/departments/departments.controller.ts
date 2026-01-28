@@ -3,7 +3,6 @@ import {
   Get,
   Post,
   Put,
-  Delete,
   Body,
   Param,
   Query,
@@ -20,9 +19,8 @@ export class DepartmentsController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
   async create(@Body() createDepartmentDto: CreateDepartmentDto) {
-    const department = await this.departmentsService.create(
-      createDepartmentDto,
-    );
+    const department =
+      await this.departmentsService.create(createDepartmentDto);
     return {
       message: 'Department created successfully',
       data: department,
@@ -39,39 +37,29 @@ export class DepartmentsController {
     };
   }
 
-  @Get(':id')
+  @Get(':departmentId')
   @HttpCode(HttpStatus.OK)
-  async findById(@Param('id') id: string) {
-    const department = await this.departmentsService.findById(id);
+  async findById(@Param('departmentId') departmentId: string) {
+    const department = await this.departmentsService.findById(departmentId);
     return {
       message: 'Department retrieved successfully',
       data: department,
     };
   }
 
-  @Put(':id')
+  @Put(':departmentId')
   @HttpCode(HttpStatus.OK)
   async update(
-    @Param('id') id: string,
+    @Param('departmentId') departmentId: string,
     @Body() updateDepartmentDto: UpdateDepartmentDto,
   ) {
     const department = await this.departmentsService.update(
-      id,
+      departmentId,
       updateDepartmentDto,
     );
     return {
       message: 'Department updated successfully',
       data: department,
-    };
-  }
-
-  @Delete(':id')
-  @HttpCode(HttpStatus.OK)
-  async delete(@Param('id') id: string) {
-    const result = await this.departmentsService.delete(id);
-    return {
-      message: result.message,
-      data: null,
     };
   }
 }

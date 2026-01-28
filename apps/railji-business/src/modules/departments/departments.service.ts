@@ -19,9 +19,7 @@ export class DepartmentsService {
 
   async create(createDepartmentDto: CreateDepartmentDto): Promise<Department> {
     try {
-      const department = await this.departmentModel.create(
-        createDepartmentDto,
-      );
+      const department = await this.departmentModel.create(createDepartmentDto);
       this.logger.log(`Department created with ID: ${department._id}`);
       return department;
     } catch (error) {
@@ -86,27 +84,6 @@ export class DepartmentsService {
         error.stack,
       );
       throw new BadRequestException('Failed to update department');
-    }
-  }
-
-  async delete(id: string): Promise<{ message: string }> {
-    try {
-      const department = await this.departmentModel
-        .findByIdAndDelete(id)
-        .exec();
-      if (!department) {
-        this.logger.warn(`Department not found for deletion with ID: ${id}`);
-        throw new NotFoundException(`Department with ID ${id} not found`);
-      }
-      this.logger.log(`Department deleted with ID: ${id}`);
-      return { message: 'Department deleted successfully' };
-    } catch (error) {
-      if (error instanceof NotFoundException) throw error;
-      this.logger.error(
-        `Error deleting department: ${error.message}`,
-        error.stack,
-      );
-      throw new BadRequestException('Failed to delete department');
     }
   }
 }

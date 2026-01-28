@@ -3,17 +3,32 @@ import { Document } from 'mongoose';
 
 @Schema({ timestamps: true })
 export class Department extends Document {
+  @Prop({ required: true, unique: true })
+  departmentId: string;
+
+  @Prop({ required: true, unique: true })
+  slug: string;
+
   @Prop({ required: true })
   name: string;
+
+  @Prop({ required: true })
+  fullName: string;
 
   @Prop()
   description: string;
 
   @Prop()
-  code: string;
+  icon: string;
 
   @Prop()
-  head: string;
+  img: string;
+
+  @Prop({ default: 0 })
+  paperCount: number;
+
+  @Prop({ default: 0 })
+  materialCount: number;
 
   @Prop({ default: Date.now })
   createdAt: Date;
