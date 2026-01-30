@@ -38,12 +38,37 @@ export class PapersController {
 
   @Get(':departmentId')
   @HttpCode(HttpStatus.OK)
-  async fetchPapersForDepartment(@Param('departmentId') departmentId: string) {
-    const papers =
-      await this.papersService.fetchPapersForDepartment(departmentId);
+  async fetchPapersForDepartment(
+    @Param('departmentId') departmentId: string,
+    @Query('page') page: string = '1',
+    @Query('limit') limit: string = '10',
+    @Query() query: any = {},
+  ) {
+    // Remove pagination params from query object
+    const { page: _, limit: __, ...searchQuery } = query;
+
+    const pageNum = parseInt(page, 10);
+    const limitNum = parseInt(limit, 10);
+
+    const result = await this.papersService.fetchPapersForDepartment(
+      departmentId,
+      pageNum,
+      limitNum,
+      searchQuery,
+    );
+
     return {
       message: 'Papers retrieved successfully',
-      data: papers,
+      data: {
+        papers: result.papers,
+        metadata: { paperCodes: result.paperCodes },
+        pagination: {
+          page: result.page,
+          limit: limitNum,
+          total: result.total,
+          totalPages: result.totalPages,
+        },
+      },
     };
   }
 
