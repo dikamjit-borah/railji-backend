@@ -10,12 +10,21 @@ import { HttpAdapterHost } from '@nestjs/core';
 
 import { isEmpty } from 'lodash';
 
+export interface ErrorResponse {
+  success: false;
+  statusCode: number;
+  message: string;
+  error: string;
+  timestamp: string;
+  path: string;
+}
+
 /**
- * The AllExceptionFilter filters all the uncaught exceptions generated
+ * The ErrorInterceptor filters all the uncaught exceptions generated
  * through the application
  */
 @Catch()
-export class AllExceptionFilter implements ExceptionFilter {
+export class ErrorInterceptor implements ExceptionFilter {
   /**
    * The parameterized constructor
    * @param httpAdapterHost {@link HttpAdapterHost}
@@ -62,12 +71,12 @@ export class AllExceptionFilter implements ExceptionFilter {
       message,
       statusCode: httpStatus,
       time: new Date().toISOString(),
-      identifier: this.requestContextProvider.get('requestId'),
+      //identifier: this.requestContextProvider.get('requestId'),
       error,
     };
     Logger.log('API  Error response', JSON.stringify(responseBody));
     Logger.error(
-      `Exception caught by AllExceptionFilter: ${message}`,
+      `Exception caught by ErrorInterceptor: ${message}`,
       exception.stack,
     );
 
