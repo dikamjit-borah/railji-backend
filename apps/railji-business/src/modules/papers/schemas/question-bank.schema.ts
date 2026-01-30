@@ -65,6 +65,9 @@ export class QuestionBank extends Document {
   departmentId: string;
 
   @Prop({ required: true })
+  paperId: string;
+
+  @Prop({ required: true })
   paperCode: string;
 
   @Prop({ type: [QuestionSchema], required: true })

@@ -47,15 +47,15 @@ export class PapersController {
     };
   }
 
-  @Get(':departmentId/:paperCode')
+  @Get(':departmentId/:paperId')
   @HttpCode(HttpStatus.OK)
-  async fetchQuestionsForPaper(
+  async fetchQuestionsForDepartmentPaper(
     @Param('departmentId') departmentId: string,
-    @Param('paperCode') paperCode: string,
+    @Param('paperId') paperId: string,
   ) {
-    const questions = await this.papersService.fetchQuestionsForPaper(
+    const questions = await this.papersService.fetchQuestionsForDepartmentPaper(
       departmentId,
-      paperCode,
+      paperId,
     );
     return {
       message: 'Questions retrieved successfully',
@@ -63,14 +63,14 @@ export class PapersController {
     };
   }
 
-  @Get(':paperCode/questions/:questionId')
+  @Get(':paperId/questions/:questionId')
   @HttpCode(HttpStatus.OK)
   async fetchQuestionForPaper(
-    @Param('paperCode') paperCode: string,
+    @Param('paperId') paperId: string,
     @Param('questionId') questionId: string,
   ) {
     const question = await this.papersService.fetchQuestionForPaper(
-      paperCode,
+      paperId,
       questionId,
     );
     return {
@@ -79,13 +79,13 @@ export class PapersController {
     };
   }
 
-  @Put(':paperCode')
+  @Put(':paperId')
   @HttpCode(HttpStatus.OK)
   async update(
-    @Param('paperCode') paperCode: string,
+    @Param('paperId') paperId: string,
     @Body() updatePaperDto: UpdatePaperDto,
   ) {
-    const paper = await this.papersService.update(paperCode, updatePaperDto);
+    const paper = await this.papersService.update(paperId, updatePaperDto);
     return {
       message: 'Paper updated successfully',
       data: paper,

@@ -23,7 +23,6 @@ export class PapersService {
   async create(createPaperDto: CreatePaperDto): Promise<Paper> {
     try {
       const paper = await this.paperModel.create(createPaperDto);
-      this.logger.log(`Paper created with ID: ${paper._id}`);
       return paper;
     } catch (error) {
       this.logger.error(`Error creating paper: ${error.message}`, error.stack);
@@ -33,51 +32,35 @@ export class PapersService {
 
   async findAll(query?: any): Promise<Paper[]> {
     try {
-      const papers = await this.paperModel
-        .find(query || {})
-        .populate('paperCode')
-        .exec();
-      this.logger.log(`Found ${papers.length} papers`);
+      const papers = await this.paperModel.find(query || {}).exec();
       return papers;
     } catch (error) {
-      this.logger.error(`Error fetching papers: ${error.message}`, error.stack);
       throw new BadRequestException('Failed to fetch papers');
     }
   }
 
   async findById(id: string): Promise<Paper> {
     try {
-      const paper = await this.paperModel
-        .findById(id)
-        .populate('paperCode')
-        .exec();
+      const paper = await this.paperModel.findById(id).exec();
       if (!paper) {
-        this.logger.warn(`Paper not found with ID: ${id}`);
         throw new NotFoundException(`Paper with ID ${id} not found`);
       }
       return paper;
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
-      this.logger.error(`Error finding paper: ${error.message}`, error.stack);
       throw new BadRequestException('Failed to fetch paper');
     }
   }
 
   async fetchPapersForDepartment(departmentId: string): Promise<Paper[]> {
     try {
-      const papers = await this.paperModel
-        .find({ departmentId })
-        .populate('departmentId')
-        .exec();
+      const papers = await this.paperModel.find({ departmentId }).exec();
       if (!papers || papers.length === 0) {
-        this.logger.warn(`No papers found for department ID: ${departmentId}`);
         throw new NotFoundException(
           `No papers found for department with ID ${departmentId}`,
         );
       }
-      this.logger.log(
-        `Found ${papers.length} papers for department ${departmentId}`,
-      );
+
       return papers;
     } catch (error) {
       this.logger.error(
@@ -88,14 +71,14 @@ export class PapersService {
     }
   }
 
-  async fetchQuestionsForPaper(departmentId: string, paperCode: string) {
+  async fetchQuestionsForDepartmentPaper(
+    departmentId: string,
+    paperId: string,
+  ) {
     try {
       const questions = await this.questionBankModel
-        .find({ departmentId, paperCode })
+        .find({ departmentId, paperId })
         .exec();
-      this.logger.log(
-        `Found ${questions.length} questions for exam ${paperCode}`,
-      );
       return questions;
     } catch (error) {
       this.logger.error(
@@ -107,15 +90,11 @@ export class PapersService {
   }
 
   async fetchQuestionForPaper(
-    paperCode: string,
+    paperId: string,
     questionId: string,
   ): Promise<Paper[]> {
     try {
-      const papers = await this.paperModel
-        .find({ paperCode, questionId })
-        .populate('paperCode')
-        .exec();
-      this.logger.log(`Found SDSDSDSDSD ${papers.length} papers for exam ${paperCode}`);
+      const papers = await this.paperModel.find({ paperId, questionId }).exec();
       return papers;
     } catch (error) {
       this.logger.error(
@@ -127,19 +106,16 @@ export class PapersService {
   }
 
   async update(
-    paperCode: string,
+    paperId: string,
     updatePaperDto: UpdatePaperDto,
   ): Promise<Paper> {
     try {
       const paper = await this.paperModel
-        .findByIdAndUpdate(paperCode, updatePaperDto, { new: true })
-        .populate('paperCode')
+        .findByIdAndUpdate(paperId, updatePaperDto, { new: true })
         .exec();
       if (!paper) {
-        this.logger.warn(`Paper not found for update with ID: ${paperCode}`);
-        throw new NotFoundException(`Paper with ID ${paperCode} not found`);
+        throw new NotFoundException(`Paper with ID ${paperId} not found`);
       }
-      this.logger.log(`Paper updated with ID: ${paperCode}`);
       return paper;
     } catch (error) {
       if (error instanceof NotFoundException) throw error;

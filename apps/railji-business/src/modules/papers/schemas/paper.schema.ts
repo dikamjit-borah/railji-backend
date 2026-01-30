@@ -7,6 +7,9 @@ export class Paper extends Document {
   departmentId: string;
 
   @Prop({ required: true })
+  paperId: string;
+
+  @Prop({ required: true })
   paperCode: string;
 
   @Prop({ required: true })
