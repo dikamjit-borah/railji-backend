@@ -3,7 +3,6 @@ import {
   Get,
   Post,
   Put,
-  Delete,
   Body,
   Param,
   Query,
@@ -37,46 +36,84 @@ export class PapersController {
     };
   }
 
-  @Get('exam/:examId')
+  @Get(':departmentId')
   @HttpCode(HttpStatus.OK)
-  async findByExamId(@Param('examId') examId: string) {
-    const papers = await this.papersService.findByExamId(examId);
+  async fetchPapersForDepartment(
+    @Param('departmentId') departmentId: string,
+    @Query('page') page: string = '1',
+    @Query('limit') limit: string = '10',
+    @Query() query: any = {},
+  ) {
+    // Remove pagination params from query object
+    const { page: _, limit: __, ...searchQuery } = query;
+
+    const pageNum = parseInt(page, 10);
+    const limitNum = parseInt(limit, 10);
+
+    const result = await this.papersService.fetchPapersForDepartment(
+      departmentId,
+      pageNum,
+      limitNum,
+      searchQuery,
+    );
+
     return {
       message: 'Papers retrieved successfully',
-      data: papers,
+      data: {
+        papers: result.papers,
+        metadata: { paperCodes: result.paperCodes },
+        pagination: {
+          page: result.page,
+          limit: limitNum,
+          total: result.total,
+          totalPages: result.totalPages,
+        },
+      },
     };
   }
 
-  @Get(':id')
+  @Get(':departmentId/:paperId')
   @HttpCode(HttpStatus.OK)
-  async findById(@Param('id') id: string) {
-    const paper = await this.papersService.findById(id);
+  async fetchQuestionsForDepartmentPaper(
+    @Param('departmentId') departmentId: string,
+    @Param('paperId') paperId: string,
+  ) {
+    const questions = await this.papersService.fetchQuestionsForDepartmentPaper(
+      departmentId,
+      paperId,
+    );
     return {
-      message: 'Paper retrieved successfully',
-      data: paper,
+      message: 'Questions retrieved successfully',
+      data: questions,
     };
   }
 
-  @Put(':id')
+  @Get(':paperId/questions/:questionId')
+  @HttpCode(HttpStatus.OK)
+  async fetchQuestionForPaper(
+    @Param('paperId') paperId: string,
+    @Param('questionId') questionId: string,
+  ) {
+    const question = await this.papersService.fetchQuestionForPaper(
+      paperId,
+      questionId,
+    );
+    return {
+      message: 'Question retrieved successfully',
+      data: question,
+    };
+  }
+
+  @Put(':paperId')
   @HttpCode(HttpStatus.OK)
   async update(
-    @Param('id') id: string,
+    @Param('paperId') paperId: string,
     @Body() updatePaperDto: UpdatePaperDto,
   ) {
-    const paper = await this.papersService.update(id, updatePaperDto);
+    const paper = await this.papersService.update(paperId, updatePaperDto);
     return {
       message: 'Paper updated successfully',
       data: paper,
-    };
-  }
-
-  @Delete(':id')
-  @HttpCode(HttpStatus.OK)
-  async delete(@Param('id') id: string) {
-    const result = await this.papersService.delete(id);
-    return {
-      message: result.message,
-      data: null,
     };
   }
 }

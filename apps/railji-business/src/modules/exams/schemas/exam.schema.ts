@@ -1,6 +1,23 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
+export interface Question {
+  questionId: string;
+  questionText: string;
+  options: string[];
+  correctAnswer: string;
+  marks: number;
+}
+
+export interface ExamSession {
+  userId: string;
+  startedAt: Date;
+  submittedAt?: Date;
+  answers: { questionId: string; answer: string }[];
+  score?: number;
+  isPassed?: boolean;
+}
+
 @Schema({ timestamps: true })
 export class Exam extends Document {
   @Prop({ required: true })
@@ -16,10 +33,25 @@ export class Exam extends Document {
   examType: string;
 
   @Prop()
-  duration: number;
+  duration: number; // in minutes
 
   @Prop()
   totalMarks: number;
+
+  @Prop({ default: false })
+  isPublished: boolean;
+
+  @Prop({ type: [Object], default: [] })
+  questions: Question[];
+
+  @Prop({ type: [Object], default: [] })
+  sessions: ExamSession[];
+
+  @Prop()
+  passingScore: number; // minimum score to pass
+
+  @Prop()
+  maxAttempts: number;
 
   @Prop({ default: Date.now })
   createdAt: Date;

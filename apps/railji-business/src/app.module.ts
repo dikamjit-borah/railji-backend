@@ -3,6 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { APP_INTERCEPTOR, APP_FILTER } from '@nestjs/core';
 import { ExamsModule } from './modules/exams/exams.module';
 import { PapersModule } from './modules/papers/papers.module';
+import { DepartmentsModule } from './modules/departments/departments.module';
 import {
   SharedCommonModule,
   LoggingInterceptor,
@@ -21,6 +22,7 @@ import { AppService } from './app.service';
     SharedCommonModule,
     ExamsModule,
     PapersModule,
+    DepartmentsModule,
   ],
   controllers: [AppController],
   providers: [
