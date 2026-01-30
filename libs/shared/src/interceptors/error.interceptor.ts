@@ -1,64 +1,78 @@
 import {
-  Injectable,
-  NestInterceptor,
-  ExecutionContext,
-  CallHandler,
-  Logger,
+  ArgumentsHost,
+  Catch,
+  ExceptionFilter,
   HttpException,
+  HttpStatus,
+  Logger,
 } from '@nestjs/common';
-import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { HttpAdapterHost } from '@nestjs/core';
 
-export interface ErrorResponse {
-  success: false;
-  statusCode: number;
-  message: string;
-  error: string;
-  timestamp: string;
-  path: string;
-}
+import { isEmpty } from 'lodash';
 
-@Injectable()
-export class ErrorInterceptor implements NestInterceptor {
-  private readonly logger = new Logger(ErrorInterceptor.name);
+/**
+ * The AllExceptionFilter filters all the uncaught exceptions generated
+ * through the application
+ */
+@Catch()
+export class AllExceptionFilter implements ExceptionFilter {
+  /**
+   * The parameterized constructor
+   * @param httpAdapterHost {@link HttpAdapterHost}
+   * @param requestContextProvider {@link RequestContextService}
+   */
+  constructor(
+    private readonly httpAdapterHost: HttpAdapterHost,
+    //private readonly requestContextProvider: RequestContextService,
+  ) {}
 
-  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
-    return next.handle().pipe(
-      catchError((error) => {
-        const request = context.switchToHttp().getRequest();
-        const response = context.switchToHttp().getResponse();
+  /**
+   * ExceptionFilter catch method, handles all the uncaught exceptions
+   * generated throughout the application.
+   * The uncaught exceptions returned with a standard format
+   *
+   * @param exception any
+   * @param host ArgumentsHost
+   */
+  catch(exception: any, host: ArgumentsHost) {
+    const { httpAdapter } = this.httpAdapterHost;
 
-        let statusCode = 500;
-        let message = 'Internal Server Error';
-        const errorMessage = error.message || 'An unexpected error occurred';
+    const ctx = host.switchToHttp();
+    const message = isEmpty(exception?.message)
+      ? exception
+      : JSON.stringify(exception?.message);
+    //const stack = isEmpty(exception?.stack) ? exception : exception.stack;
+    const errorMessage = message
+      ? { message }
+      : { message: 'Something went wrong' };
+    const errorResponse = exception?.response
+      ? exception?.response
+      : errorMessage;
+    const error = {
+      ...errorResponse,
+      //stack,
+    };
+    const httpStatus =
+      exception instanceof HttpException
+        ? exception.getStatus()
+        : HttpStatus.INTERNAL_SERVER_ERROR;
 
-        if (error instanceof HttpException) {
-          statusCode = error.getStatus();
-          const errorResponse = error.getResponse();
-          message =
-            typeof errorResponse === 'string'
-              ? errorResponse
-              : (errorResponse as any).message || 'Error';
-        } else {
-          this.logger.error(
-            `Unhandled Exception: ${error.message}`,
-            error.stack,
-            'ErrorInterceptor',
-          );
-        }
-
-        const errorResponse: ErrorResponse = {
-          success: false,
-          statusCode,
-          message,
-          error: errorMessage,
-          timestamp: new Date().toISOString(),
-          path: request.url,
-        };
-
-        response.status(statusCode).json(errorResponse);
-        return throwError(() => error);
-      }),
+    const responseBody = {
+      success: false,
+      message,
+      statusCode: httpStatus,
+      time: new Date().toISOString(),
+      identifier: this.requestContextProvider.get('requestId'),
+      error,
+    };
+    Logger.log('API  Error response', JSON.stringify(responseBody));
+    Logger.error(
+      `Exception caught by AllExceptionFilter: ${message}`,
+      exception.stack,
     );
+
+    //this.serviceRequestLogger.logRequest(ctx, responseBody);
+
+    httpAdapter.reply(ctx.getResponse(), responseBody, httpStatus);
   }
 }
