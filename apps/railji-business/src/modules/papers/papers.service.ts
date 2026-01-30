@@ -8,12 +8,17 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Paper } from './schemas/paper.schema';
 import { CreatePaperDto, UpdatePaperDto } from './dto/paper.dto';
+import { QuestionBank } from './schemas/question-bank.schema';
 
 @Injectable()
 export class PapersService {
   private readonly logger = new Logger(PapersService.name);
 
-  constructor(@InjectModel(Paper.name) private paperModel: Model<Paper>) {}
+  constructor(
+    @InjectModel(Paper.name) private paperModel: Model<Paper>,
+    @InjectModel(QuestionBank.name)
+    private questionBankModel: Model<QuestionBank>,
+  ) {}
 
   async create(createPaperDto: CreatePaperDto): Promise<Paper> {
     try {
@@ -30,7 +35,7 @@ export class PapersService {
     try {
       const papers = await this.paperModel
         .find(query || {})
-        .populate('examId')
+        .populate('paperCode')
         .exec();
       this.logger.log(`Found ${papers.length} papers`);
       return papers;
@@ -44,7 +49,7 @@ export class PapersService {
     try {
       const paper = await this.paperModel
         .findById(id)
-        .populate('examId')
+        .populate('paperCode')
         .exec();
       if (!paper) {
         this.logger.warn(`Paper not found with ID: ${id}`);
@@ -64,25 +69,34 @@ export class PapersService {
         .find({ departmentId })
         .populate('departmentId')
         .exec();
-      this.logger.log(`Found ${papers.length} papers for exam ${departmentId}`);
+      if (!papers || papers.length === 0) {
+        this.logger.warn(`No papers found for department ID: ${departmentId}`);
+        throw new NotFoundException(
+          `No papers found for department with ID ${departmentId}`,
+        );
+      }
+      this.logger.log(
+        `Found ${papers.length} papers for department ${departmentId}`,
+      );
       return papers;
     } catch (error) {
       this.logger.error(
-        `Error finding papers by exam: ${error.message}`,
+        `Error finding papers by department: ${error.message}`,
         error.stack,
       );
-      throw new BadRequestException('Failed to fetch papers');
+      throw new BadRequestException(`Failed to fetch papers: ${error.message}`);
     }
   }
 
-  async fetchQuestionsForPaper(paperId: string): Promise<Paper[]> {
+  async fetchQuestionsForPaper(departmentId: string, paperCode: string) {
     try {
-      const papers = await this.paperModel
-        .find({ paperId })
-        .populate('paperId')
+      const questions = await this.questionBankModel
+        .find({ departmentId, paperCode })
         .exec();
-      this.logger.log(`Found ${papers.length} papers for exam ${paperId}`);
-      return papers;
+      this.logger.log(
+        `Found ${questions.length} questions for exam ${paperCode}`,
+      );
+      return questions;
     } catch (error) {
       this.logger.error(
         `Error finding papers by exam: ${error.message}`,
@@ -93,15 +107,15 @@ export class PapersService {
   }
 
   async fetchQuestionForPaper(
-    paperId: string,
+    paperCode: string,
     questionId: string,
   ): Promise<Paper[]> {
     try {
       const papers = await this.paperModel
-        .find({ paperId, questionId })
-        .populate('paperId')
+        .find({ paperCode, questionId })
+        .populate('paperCode')
         .exec();
-      this.logger.log(`Found ${papers.length} papers for exam ${paperId}`);
+      this.logger.log(`Found SDSDSDSDSD ${papers.length} papers for exam ${paperCode}`);
       return papers;
     } catch (error) {
       this.logger.error(
@@ -113,19 +127,19 @@ export class PapersService {
   }
 
   async update(
-    paperId: string,
+    paperCode: string,
     updatePaperDto: UpdatePaperDto,
   ): Promise<Paper> {
     try {
       const paper = await this.paperModel
-        .findByIdAndUpdate(paperId, updatePaperDto, { new: true })
-        .populate('paperId')
+        .findByIdAndUpdate(paperCode, updatePaperDto, { new: true })
+        .populate('paperCode')
         .exec();
       if (!paper) {
-        this.logger.warn(`Paper not found for update with ID: ${paperId}`);
-        throw new NotFoundException(`Paper with ID ${paperId} not found`);
+        this.logger.warn(`Paper not found for update with ID: ${paperCode}`);
+        throw new NotFoundException(`Paper with ID ${paperCode} not found`);
       }
-      this.logger.log(`Paper updated with ID: ${paperId}`);
+      this.logger.log(`Paper updated with ID: ${paperCode}`);
       return paper;
     } catch (error) {
       if (error instanceof NotFoundException) throw error;

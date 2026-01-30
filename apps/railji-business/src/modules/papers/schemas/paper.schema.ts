@@ -1,10 +1,10 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Document } from 'mongoose';
 
 @Schema({ collection: 'papers', timestamps: true })
 export class Paper extends Document {
-  @Prop({ type: Types.ObjectId, ref: 'Department', required: true })
-  departmentId: Types.ObjectId;
+  @Prop({ required: true })
+  departmentId: string;
 
   @Prop({ required: true })
   paperCode: string;
@@ -22,6 +22,9 @@ export class Paper extends Document {
   shift: string;
 
   @Prop({ required: true })
+  zones: string; //17 zones
+
+  @Prop({ required: true })
   examType: string;
 
   @Prop({ type: [String], required: true })
@@ -35,6 +38,9 @@ export class Paper extends Document {
 
   @Prop({ required: true })
   passMarks: number;
+
+  @Prop({ required: true })
+  negativeMarking: number;
 
   @Prop({ default: 0 })
   rating: number;
@@ -53,5 +59,3 @@ export class Paper extends Document {
 }
 
 export const PaperSchema = SchemaFactory.createForClass(Paper);
-
-
