@@ -1,4 +1,4 @@
-import {
+/* import {
   Injectable,
   Logger,
   NotFoundException,
@@ -192,3 +192,4 @@ export class ExamsService {
     }
   }
 }
+ */
