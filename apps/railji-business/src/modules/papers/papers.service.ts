@@ -9,49 +9,53 @@ import { Model } from 'mongoose';
 import { Paper } from './schemas/paper.schema';
 import { CreatePaperDto, UpdatePaperDto } from './dto/paper.dto';
 import { QuestionBank } from './schemas/question-bank.schema';
+import { CacheService } from '@railji/shared';
+
+export interface PaperCodesByType {
+  general: string[];
+  nonGeneral: string[];
+}
 
 @Injectable()
 export class PapersService {
   private readonly logger = new Logger(PapersService.name);
-  private readonly paperCodesCache = new Map<
-    string,
-    { general: string[]; nonGeneral: string[] }
-  >();
+  private readonly PAPER_CODES_PREFIX = 'paper_codes';
+  private readonly DEFAULT_TTL = 30 * 60 * 1000; // 30 minutes
 
   constructor(
     @InjectModel(Paper.name) private paperModel: Model<Paper>,
     @InjectModel(QuestionBank.name)
     private questionBankModel: Model<QuestionBank>,
+    private readonly cacheService: CacheService,
   ) {}
 
+  private generateCacheKey(departmentId: string, filters?: any): string {
+    const filtersStr = filters ? JSON.stringify(filters) : '{}';
+    return `${this.PAPER_CODES_PREFIX}:${departmentId}:${filtersStr}`;
+  }
+
   private clearDepartmentCache(departmentId: string): void {
-    // Clear all cache entries for this department (with any filters)
-    const keysToDelete: string[] = [];
-    for (const key of this.paperCodesCache.keys()) {
-      if (key.startsWith(`${departmentId}_`)) {
-        keysToDelete.push(key);
-      }
-    }
-
-    keysToDelete.forEach((key) => this.paperCodesCache.delete(key));
-
-    if (keysToDelete.length > 0) {
+    const pattern = `^${this.PAPER_CODES_PREFIX}:${departmentId}:`;
+    const deletedCount = this.cacheService.deletePattern(pattern);
+    if (deletedCount > 0) {
       this.logger.debug(
-        `Cleared ${keysToDelete.length} cache entries for department: ${departmentId}`,
+        `Cleared ${deletedCount} cache entries for department: ${departmentId}`,
       );
     }
   }
 
   private clearAllDepartmentCaches(): void {
-    // Clear all caches since general papers affect all departments
-    this.paperCodesCache.clear();
-    this.logger.debug(
-      'Cleared all paper codes cache due to general paper changes',
-    );
+    const pattern = `^${this.PAPER_CODES_PREFIX}:`;
+    const deletedCount = this.cacheService.deletePattern(pattern);
+    if (deletedCount > 0) {
+      this.logger.debug(
+        `Cleared all paper codes cache: ${deletedCount} entries removed`,
+      );
+    }
   }
 
   clearAllCache(): void {
-    this.paperCodesCache.clear();
+    this.cacheService.clear();
     this.logger.debug('Cleared all paper codes cache');
   }
 
@@ -97,19 +101,18 @@ export class PapersService {
     }
   }
 
-  async fetchPaperCodesByType(
-    departmentId: string,
-  ): Promise<{ general: string[]; nonGeneral: string[] }> {
+  async fetchPaperCodesByType(departmentId: string): Promise<PaperCodesByType> {
     try {
-      const cacheKey = `${departmentId}`;
+      const cacheKey = this.generateCacheKey(departmentId);
 
-      // Check if paper codes are already cached for this department
-      /* if (this.paperCodesCache.has(cacheKey)) {
+      // Check if paper codes are already cached
+      const cached = this.cacheService.get<PaperCodesByType>(cacheKey);
+      if (cached) {
         this.logger.debug(
           `Returning cached paper codes for department: ${departmentId}`,
         );
-        return this.paperCodesCache.get(cacheKey)!;
-      } */
+        return cached;
+      }
 
       // Single aggregation with conditional logic for general vs non-general papers
       const result = await this.paperModel
@@ -160,10 +163,11 @@ export class PapersService {
         .exec();
 
       // Process results
-      const paperCodesByType = {
-        general: [] as string[],
-        nonGeneral: [] as string[],
+      const paperCodesByType: PaperCodesByType = {
+        general: [],
+        nonGeneral: [],
       };
+
       result.forEach((item: { type: string; paperCodes: string[] }) => {
         if (item.type === 'general') {
           paperCodesByType.general = item.paperCodes;
@@ -172,10 +176,10 @@ export class PapersService {
         }
       });
 
-      // Cache the paper codes for this department and filters
-      this.paperCodesCache.set(cacheKey, paperCodesByType);
+      // Cache the results
+      this.cacheService.set(cacheKey, paperCodesByType, this.DEFAULT_TTL);
       this.logger.debug(
-        `Cached ${paperCodesByType.general.length} general (from all departments) and ${paperCodesByType.nonGeneral.length} non-general paper codes for department: ${departmentId}`,
+        `Cached ${paperCodesByType.general.length} general and ${paperCodesByType.nonGeneral.length} non-general paper codes for department: ${departmentId}`,
       );
 
       return paperCodesByType;
@@ -196,7 +200,7 @@ export class PapersService {
     limit: number = 10,
     query?: any,
   ): Promise<{
-    paperCodes: { general: string[]; nonGeneral: string[] };
+    paperCodes: PaperCodesByType;
     papers: Paper[];
     total: number;
     page: number;

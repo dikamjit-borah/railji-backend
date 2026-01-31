@@ -23,6 +23,7 @@ export {
   HttpClientService,
   HttpClientInterceptor,
 } from './services/http-client.service';
+export { CacheService } from './services/cache.service';
 
 // Module
 export { SharedCommonModule } from './common/shared-common.module';
