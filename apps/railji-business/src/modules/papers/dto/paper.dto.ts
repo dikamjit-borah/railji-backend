@@ -20,6 +20,10 @@ export class CreatePaperDto {
 
   @IsOptional()
   duration?: number;
+
+  @IsString()
+  @IsOptional()
+  paperType?: string;
 }
 
 export class UpdatePaperDto {
@@ -44,4 +48,8 @@ export class UpdatePaperDto {
 
   @IsOptional()
   duration?: number;
+
+  @IsString()
+  @IsOptional()
+  paperType?: string;
 }
