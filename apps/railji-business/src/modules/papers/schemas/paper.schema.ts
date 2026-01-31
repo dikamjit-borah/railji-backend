@@ -12,6 +12,9 @@ export class Paper extends Document {
   @Prop({ required: true })
   paperCode: string;
 
+  @Prop({ required: true, enum: ['general', 'sectional', 'full-paper'] })
+  paperType: string;
+
   @Prop({ required: true })
   name: string;
 
@@ -26,10 +29,6 @@ export class Paper extends Document {
 
   @Prop({ required: true })
   zones: string; //17 zones
-
-  @Prop({ required: true })
-  examType: string;
-
   @Prop({ type: [String], required: true })
   sections: string[];
 

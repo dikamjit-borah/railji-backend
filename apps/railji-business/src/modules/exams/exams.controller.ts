@@ -8,14 +8,14 @@ import {
   HttpStatus,
   HttpCode,
 } from '@nestjs/common';
-import { ExamsService } from './exams.service';
+//import { ExamsService } from './exams.service';
 import { SubmitExamDto, StartExamDto } from './dto/exam.dto';
 
 @Controller('exams')
 export class ExamsController {
-  constructor(private readonly examsService: ExamsService) {}
+  constructor(/* private readonly examsService: ExamsService */) {}
 
-  // GET /exams - List available published exams
+  /*   // GET /exams - List available published exams
   @Get()
   @HttpCode(HttpStatus.OK)
   async findAllPublished() {
@@ -68,5 +68,5 @@ export class ExamsController {
       message: 'Exam results retrieved successfully',
       data: results,
     };
-  }
+  } */
 }
