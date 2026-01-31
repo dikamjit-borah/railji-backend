@@ -57,52 +57,49 @@ export class PapersService {
     page: number = 1,
     limit: number = 10,
     query?: any,
-  ): Promise<{ 
-    paperCodes: string[]; 
-    papers: Paper[]; 
-    total: number; 
-    page: number; 
-    totalPages: number 
+  ): Promise<{
+    paperCodes: string[];
+    papers: Paper[];
+    total: number;
+    page: number;
+    totalPages: number;
   }> {
     try {
       const skip = (page - 1) * limit;
-      
+
       // Build the query with departmentId and any additional filters
-      const searchQuery = { 
-        departmentId, 
-        ...query 
+      const searchQuery = {
+        departmentId,
+        ...query,
       };
 
-      const result = await this.paperModel.aggregate([
-        // Match documents based on search criteria
-        { $match: searchQuery },
-        
-        // Create a facet to run multiple operations in parallel
-        {
-          $facet: {
-            // Get unique paperCodes
-            paperCodes: [
-              { $group: { _id: '$paperCode' } },
-              { $sort: { _id: 1 } },
-              { $project: { _id: 0, paperCode: '$_id' } }
-            ],
-            
-            // Get paginated papers
-            papers: [
-              { $skip: skip },
-              { $limit: limit }
-            ],
-            
-            // Get total count
-            totalCount: [
-              { $count: 'count' }
-            ]
-          }
-        }
-      ]).exec();
+      const result = await this.paperModel
+        .aggregate([
+          // Match documents based on search criteria
+          { $match: searchQuery },
+
+          // Create a facet to run multiple operations in parallel
+          {
+            $facet: {
+              // Get unique paperCodes
+              paperCodes: [
+                { $group: { _id: '$paperCode' } },
+                { $sort: { _id: 1 } },
+                { $project: { _id: 0, paperCode: '$_id' } },
+              ],
+
+              // Get paginated papers
+              papers: [{ $skip: skip }, { $limit: limit }],
+
+              // Get total count
+              totalCount: [{ $count: 'count' }],
+            },
+          },
+        ])
+        .exec();
 
       const data = result[0];
-      const paperCodes = data.paperCodes.map(item => item.paperCode);
+      const paperCodes = data.paperCodes.map((item) => item.paperCode);
       const papers = data.papers;
       const total = data.totalCount[0]?.count || 0;
       const totalPages = Math.ceil(total / limit);
@@ -129,7 +126,7 @@ export class PapersService {
   ) {
     try {
       const questions = await this.questionBankModel
-        .find({ departmentId, paperId })
+        .find({ departmentId, paperId }, { 'questions.correct': 0 })
         .exec();
       return questions;
     } catch (error) {
