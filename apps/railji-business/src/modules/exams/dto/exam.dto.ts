@@ -118,29 +118,105 @@ export class UpdateExamDto {
   maxAttempts?: number;
 }
 
-export class AnswerDto {
+export class ResponseDto {
+  @IsNumber()
+  @IsNotEmpty()
+  questionId: number;
+
+  @IsNumber()
+  @IsNotEmpty()
+  selectedOption: number;
+
+  @IsBoolean()
+  @IsNotEmpty()
+  isFlagged: boolean;
+}
+
+export class DeviceInfoDto {
   @IsString()
   @IsNotEmpty()
-  questionId: string;
+  browser: string;
 
   @IsString()
   @IsNotEmpty()
-  answer: string;
+  os: string;
+
+  @IsString()
+  @IsNotEmpty()
+  device: string;
+
+  @IsString()
+  @IsNotEmpty()
+  ipAddress: string;
+
+  @IsString()
+  @IsNotEmpty()
+  userAgent: string;
 }
 
 export class SubmitExamDto {
   @IsString()
   @IsNotEmpty()
+  attemptId: string;
+
+  @IsString()
+  @IsNotEmpty()
   userId: string;
+
+  @IsString()
+  @IsNotEmpty()
+  paperId: string;
 
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => AnswerDto)
-  answers: AnswerDto[];
+  @Type(() => ResponseDto)
+  responses: ResponseDto[];
+
+  @IsNumber()
+  @IsNotEmpty()
+  totalQuestions: number;
+
+  @IsNumber()
+  @IsOptional()
+  attemptedQuestions?: number;
+
+  @IsNumber()
+  @IsOptional()
+  unattemptedQuestions?: number;
+
+  @IsNumber()
+  @IsNotEmpty()
+  maxScore: number;
+
+  @IsNumber()
+  @IsNotEmpty()
+  passingScore: number;
+
+  @ValidateNested()
+  @Type(() => DeviceInfoDto)
+  @IsNotEmpty()
+  deviceInfo: DeviceInfoDto;
+
+  @IsString()
+  @IsOptional()
+  remarks?: string;
 }
 
 export class StartExamDto {
   @IsString()
   @IsNotEmpty()
   userId: string;
+
+  @IsString()
+  @IsNotEmpty()
+  paperId: string;
+
+  @IsString()
+  @IsNotEmpty()
+  startTime: string;
+
+  @ValidateNested()
+  @Type(() => DeviceInfoDto)
+  @IsNotEmpty()
+  deviceInfo: DeviceInfoDto;
 }

@@ -42,21 +42,18 @@ export const DeviceInfoSchema = SchemaFactory.createForClass(DeviceInfo);
 @Schema({ collection: 'exams', timestamps: true })
 export class Exam extends Document {
   @Prop({ required: true, unique: true })
-  attemptId: string;
+  examId: string;
 
   @Prop({ required: true, type: Types.ObjectId, ref: 'User' })
   userId: Types.ObjectId;
 
   @Prop({ required: true })
-  departmentId: string;
-
-  @Prop({ required: true })
-  paperCode: string;
+  paperId: string;
 
   @Prop({ type: [ResponseSchema], default: [] })
   responses: Response[];
 
-  @Prop({ required: true })
+  @Prop({ default: 0 })
   totalQuestions: number;
 
   @Prop({ default: 0 })
@@ -74,7 +71,7 @@ export class Exam extends Document {
   @Prop({ default: 0 })
   score: number;
 
-  @Prop({ required: true })
+  @Prop({ default: 0 })
   maxScore: number;
 
   @Prop({ default: 0 })
@@ -105,32 +102,14 @@ export class Exam extends Document {
   @Prop({ default: false })
   isPassed: boolean;
 
-  @Prop({ required: true })
+  @Prop({ default: 0 })
   passingScore: number;
-
-  /*  @Prop({ 
-    required: true,
-    enum: ['mock', 'practice', 'final', 'assessment']
-  })
-  examType: string; */
 
   @Prop({ type: DeviceInfoSchema, required: true })
   deviceInfo: DeviceInfo;
-
-  @Prop({ default: false })
-  isFlagged: boolean;
-
-  @Prop()
-  flagReason: string;
 
   @Prop()
   remarks: string;
 }
 
 export const ExamSchema = SchemaFactory.createForClass(Exam);
-
-// Create indexes for better query performance
-ExamSchema.index({ userId: 1, paperCode: 1 });
-ExamSchema.index({ departmentId: 1, examType: 1 });
-ExamSchema.index({ attemptId: 1 }, { unique: true });
-ExamSchema.index({ status: 1, createdAt: -1 });
