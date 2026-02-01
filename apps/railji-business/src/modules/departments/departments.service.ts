@@ -32,11 +32,14 @@ export class DepartmentsService {
     }
   }
 
-  async findAll(query?: any): Promise<Department[]> {
+  async fetchAllDepartments(query?: any): Promise<{ departments: Department[]; metadata: { general: Department | null } }> {
     try {
       const departments = await this.departmentModel.find(query || {}).exec();
-      this.logger.log(`Found ${departments.length} departments`);
-      return departments;
+      const general = departments.find(dept => dept.departmentId === 'GENERAL') || null;
+      const filtered = departments.filter(dept => dept.departmentId !== 'GENERAL');
+      
+      this.logger.log(`Found ${filtered.length} departments`);
+      return { departments: filtered, metadata: { general } };
     } catch (error) {
       this.logger.error(
         `Error fetching departments: ${error.message}`,
