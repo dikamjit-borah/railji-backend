@@ -1,30 +1,17 @@
 import {
   Controller,
   Get,
-  Post,
-  Put,
-  Body,
   Param,
   Query,
   HttpStatus,
   HttpCode,
 } from '@nestjs/common';
 import { PapersService } from './papers.service';
-import { CreatePaperDto, UpdatePaperDto } from './dto/paper.dto';
+import { FetchPapersQueryDto } from './dto/paper.dto';
 
 @Controller('papers')
 export class PapersController {
   constructor(private readonly papersService: PapersService) {}
-
-  @Post()
-  @HttpCode(HttpStatus.CREATED)
-  async create(@Body() createPaperDto: CreatePaperDto) {
-    const paper = await this.papersService.create(createPaperDto);
-    return {
-      message: 'Paper created successfully',
-      data: paper,
-    };
-  }
 
   @Get()
   @HttpCode(HttpStatus.OK)
@@ -40,20 +27,21 @@ export class PapersController {
   @HttpCode(HttpStatus.OK)
   async fetchPapersForDepartment(
     @Param('departmentId') departmentId: string,
-    @Query('page') page: string = '1',
-    @Query('limit') limit: string = '10',
-    @Query() query: any = {},
+    @Query() queryDto: FetchPapersQueryDto,
   ) {
-    // Remove pagination params from query object
-    const { page: _, limit: __, ...searchQuery } = query;
+    const page = queryDto.page || 1;
+    const limit = queryDto.limit || 10;
 
-    const pageNum = parseInt(page, 10);
-    const limitNum = parseInt(limit, 10);
+    // Build search query from optional filters
+    const searchQuery: any = {};
+    if (queryDto.paperCode) searchQuery.paperCode = queryDto.paperCode;
+    if (queryDto.paperType) searchQuery.paperType = queryDto.paperType;
+    if (queryDto.year) searchQuery.paperType = queryDto.year;
 
     const result = await this.papersService.fetchPapersForDepartment(
       departmentId,
-      pageNum,
-      limitNum,
+      page,
+      limit,
       searchQuery,
     );
 
@@ -64,7 +52,7 @@ export class PapersController {
         metadata: { paperCodes: result.paperCodes },
         pagination: {
           page: result.page,
-          limit: limitNum,
+          limit,
           total: result.total,
           totalPages: result.totalPages,
         },
@@ -88,6 +76,22 @@ export class PapersController {
     };
   }
 
+  @Get(':departmentId/:paperId/answers')
+  @HttpCode(HttpStatus.OK)
+  async fetchAnswersForPaper(
+    @Param('departmentId') departmentId: string,
+    @Param('paperId') paperId: string,
+  ) {
+    const answers = await this.papersService.fetchAnswersForDepartmentPaper(
+      departmentId,
+      paperId,
+    );
+    return {
+      message: 'Answers retrieved successfully',
+      data: answers,
+    };
+  }
+
   @Get(':paperId/questions/:questionId')
   @HttpCode(HttpStatus.OK)
   async fetchQuestionForPaper(
@@ -101,19 +105,6 @@ export class PapersController {
     return {
       message: 'Question retrieved successfully',
       data: question,
-    };
-  }
-
-  @Put(':paperId')
-  @HttpCode(HttpStatus.OK)
-  async update(
-    @Param('paperId') paperId: string,
-    @Body() updatePaperDto: UpdatePaperDto,
-  ) {
-    const paper = await this.papersService.update(paperId, updatePaperDto);
-    return {
-      message: 'Paper updated successfully',
-      data: paper,
     };
   }
 }

@@ -14,7 +14,8 @@ export class DepartmentsService {
   private readonly logger = new Logger(DepartmentsService.name);
 
   constructor(
-    @InjectModel(Department.name) private departmentModel: Model<Department>,
+    @InjectModel(Department.name)
+    private readonly departmentModel: Model<Department>,
   ) {}
 
   async create(createDepartmentDto: CreateDepartmentDto): Promise<Department> {
