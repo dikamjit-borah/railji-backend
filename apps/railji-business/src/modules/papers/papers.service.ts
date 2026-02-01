@@ -215,8 +215,6 @@ export class PapersService {
         ...query,
       };
 
-      console.log(searchQuery);
-      
       // Get cached paper codes by type
       const paperCodes = await this.fetchPaperCodesByType(departmentId);
 
@@ -259,6 +257,39 @@ export class PapersService {
         error.stack,
       );
       throw new BadRequestException('Failed to fetch papers');
+    }
+  }
+
+  async fetchAnswersForDepartmentPaper(departmentId: string, paperId: string) {
+    try {
+      const answers = await this.questionBankModel
+        .aggregate([
+          {
+            $match: { departmentId, paperId },
+          },
+          {
+            $project: {
+              answers: {
+                $map: {
+                  input: '$questions',
+                  as: 'question',
+                  in: {
+                    id: '$$question.id',
+                    correct: '$$question.correct',
+                  },
+                },
+              },
+            },
+          },
+        ])
+        .exec();
+      return answers;
+    } catch (error) {
+      this.logger.error(
+        `Error finding answers by department and paper: ${error.message}`,
+        error.stack,
+      );
+      throw new BadRequestException('Failed to fetch answers');
     }
   }
 
