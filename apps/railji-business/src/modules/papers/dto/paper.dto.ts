@@ -76,7 +76,7 @@ export class FetchPapersQueryDto {
   @IsOptional()
   paperCode?: string;
 
-  @IsString()
+  @IsNumber()
   @IsOptional()
   year?: number;
 }
