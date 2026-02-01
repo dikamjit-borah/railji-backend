@@ -30,10 +30,10 @@ export class DepartmentsController {
   @Get()
   @HttpCode(HttpStatus.OK)
   async findAll(@Query() query?: any) {
-    const departments = await this.departmentsService.findAll(query);
+    const result = await this.departmentsService.fetchAllDepartments(query);
     return {
       message: 'Departments retrieved successfully',
-      data: departments,
+      data: result,
     };
   }
 
