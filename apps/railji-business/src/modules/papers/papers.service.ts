@@ -106,13 +106,13 @@ export class PapersService {
       const cacheKey = this.generateCacheKey(departmentId);
 
       // Check if paper codes are already cached
-      const cached = this.cacheService.get<PaperCodesByType>(cacheKey);
+      /* const cached = this.cacheService.get<PaperCodesByType>(cacheKey);
       if (cached) {
         this.logger.debug(
           `Returning cached paper codes for department: ${departmentId}`,
         );
         return cached;
-      }
+      } */
 
       // Single aggregation with conditional logic for general vs non-general papers
       const result = await this.paperModel
@@ -215,6 +215,8 @@ export class PapersService {
         ...query,
       };
 
+      console.log(searchQuery);
+      
       // Get cached paper codes by type
       const paperCodes = await this.fetchPaperCodesByType(departmentId);
 
