@@ -9,115 +9,6 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
-export class QuestionDto {
-  @IsString()
-  @IsNotEmpty()
-  questionId: string;
-
-  @IsString()
-  @IsNotEmpty()
-  questionText: string;
-
-  @IsArray()
-  @IsString({ each: true })
-  options: string[];
-
-  @IsString()
-  @IsNotEmpty()
-  correctAnswer: string;
-
-  @IsNumber()
-  marks: number;
-}
-
-export class CreateExamDto {
-  @IsString()
-  @IsNotEmpty()
-  title: string;
-
-  @IsString()
-  @IsOptional()
-  description?: string;
-
-  @IsString()
-  @IsOptional()
-  subject?: string;
-
-  @IsString()
-  @IsOptional()
-  examType?: string;
-
-  @IsNumber()
-  @IsOptional()
-  duration?: number;
-
-  @IsNumber()
-  @IsOptional()
-  totalMarks?: number;
-
-  @IsBoolean()
-  @IsOptional()
-  isPublished?: boolean;
-
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => QuestionDto)
-  @IsOptional()
-  questions?: QuestionDto[];
-
-  @IsNumber()
-  @IsOptional()
-  passingScore?: number;
-
-  @IsNumber()
-  @IsOptional()
-  maxAttempts?: number;
-}
-
-export class UpdateExamDto {
-  @IsString()
-  @IsOptional()
-  title?: string;
-
-  @IsString()
-  @IsOptional()
-  description?: string;
-
-  @IsString()
-  @IsOptional()
-  subject?: string;
-
-  @IsString()
-  @IsOptional()
-  examType?: string;
-
-  @IsNumber()
-  @IsOptional()
-  duration?: number;
-
-  @IsNumber()
-  @IsOptional()
-  totalMarks?: number;
-
-  @IsBoolean()
-  @IsOptional()
-  isPublished?: boolean;
-
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => QuestionDto)
-  @IsOptional()
-  questions?: QuestionDto[];
-
-  @IsNumber()
-  @IsOptional()
-  passingScore?: number;
-
-  @IsNumber()
-  @IsOptional()
-  maxAttempts?: number;
-}
-
 export class ResponseDto {
   @IsNumber()
   @IsNotEmpty()
@@ -157,24 +48,24 @@ export class DeviceInfoDto {
 export class SubmitExamDto {
   @IsString()
   @IsNotEmpty()
-  attemptId: string;
+  examId: string;
 
   @IsString()
   @IsNotEmpty()
   userId: string;
 
-  @IsString()
+    @IsString()
   @IsNotEmpty()
   paperId: string;
+
+    @IsString()
+  @IsNotEmpty()
+  departmentId: string;
 
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => ResponseDto)
   responses: ResponseDto[];
-
-  @IsNumber()
-  @IsNotEmpty()
-  totalQuestions: number;
 
   @IsNumber()
   @IsOptional()
@@ -183,14 +74,6 @@ export class SubmitExamDto {
   @IsNumber()
   @IsOptional()
   unattemptedQuestions?: number;
-
-  @IsNumber()
-  @IsNotEmpty()
-  maxScore: number;
-
-  @IsNumber()
-  @IsNotEmpty()
-  passingScore: number;
 
   @ValidateNested()
   @Type(() => DeviceInfoDto)
@@ -210,6 +93,10 @@ export class StartExamDto {
   @IsString()
   @IsNotEmpty()
   paperId: string;
+
+  @IsString()
+  @IsNotEmpty()
+  departmentId: string;
 
   @IsString()
   @IsNotEmpty()
