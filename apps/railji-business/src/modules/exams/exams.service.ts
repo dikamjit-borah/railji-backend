@@ -1,195 +1,175 @@
-/* import {
+import {
   Injectable,
   Logger,
   NotFoundException,
   BadRequestException,
-  ConflictException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Exam, ExamSession } from './schemas/exam.schema';
-import { SubmitExamDto } from './dto/exam.dto';
+import { randomUUID } from 'crypto';
+import { Exam } from './schemas/exam.schema';
+import { SubmitExamDto, StartExamDto } from './dto/exam.dto';
+import { PapersService } from '../papers/papers.service';
 
 @Injectable()
 export class ExamsService {
   private readonly logger = new Logger(ExamsService.name);
 
-  constructor(@InjectModel(Exam.name) private examModel: Model<Exam>) {}
+  constructor(
+    @InjectModel(Exam.name) private examModel: Model<Exam>,
+    private papersService: PapersService,
+  ) {}
 
-  // USER-FACING: List available published exams
-  async findAllPublished(): Promise<Exam[]> {
+  // Start exam session
+  async startExam(startExamDto: StartExamDto): Promise<any> {
     try {
-      const exams = await this.examModel
-        .find({ isPublished: true })
-        .select('-questions.correctAnswer -sessions')
-        .exec();
-      this.logger.log(`Found ${exams.length} published exams`);
-      return exams;
-    } catch (error) {
-      this.logger.error(`Error fetching exams: ${error.message}`, error.stack);
-      throw new BadRequestException('Failed to fetch exams');
-    }
-  }
-
-  // USER-FACING: Get exam details without answers
-  async findPublishedById(id: string): Promise<Exam> {
-    try {
-      const exam = await this.examModel
-        .findOne({ _id: id, isPublished: true })
-        .select('-questions.correctAnswer -sessions')
-        .exec();
-      if (!exam) {
-        this.logger.warn(`Published exam not found with ID: ${id}`);
-        throw new NotFoundException(`Exam with ID ${id} not found`);
-      }
-      return exam;
-    } catch (error) {
-      if (error instanceof NotFoundException) throw error;
-      this.logger.error(`Error finding exam: ${error.message}`, error.stack);
-      throw new BadRequestException('Failed to fetch exam');
-    }
-  }
-
-  // USER-FACING: Start exam session
-  async startExam(examId: string, userId: string): Promise<any> {
-    try {
-      const exam = await this.examModel.findOne({ _id: examId, isPublished: true }).exec();
-      if (!exam) {
-        throw new NotFoundException(`Exam with ID ${examId} not found`);
-      }
-
-      // Check if user has already started or exceeded max attempts
-      const userSessions = exam.sessions.filter((s) => s.userId === userId);
-      if (exam.maxAttempts && userSessions.length >= exam.maxAttempts) {
-        throw new ConflictException('Maximum attempts reached for this exam');
-      }
-
-      // Check if there's an active session (started but not submitted)
-      const activeSession = userSessions.find((s) => !s.submittedAt);
-      if (activeSession) {
-        throw new ConflictException('You already have an active session for this exam');
-      }
-
-      const newSession: ExamSession = {
+      const {
         userId,
-        startedAt: new Date(),
-        answers: [],
-      };
+        paperId,
+        departmentId,
+        deviceInfo,
+        startTime,
+      } = startExamDto;
 
-      exam.sessions.push(newSession);
-      await exam.save();
+      // Generate unique attempt ID
+      const examId = randomUUID();
 
-      this.logger.log(`Exam session started for user ${userId} on exam ${examId}`);
+      // Create exam record with initial state
+      await this.examModel.create({
+        examId,
+        userId,
+        paperId,
+        departmentId,
+        responses: [],
+        status: 'in-progress',
+        startTime,
+        deviceInfo,
+      });
 
-      // Return exam questions without correct answers
-      return {
-        examId: exam._id,
-        title: exam.title,
-        description: exam.description,
-        duration: exam.duration,
-        totalMarks: exam.totalMarks,
-        sessionStartedAt: newSession.startedAt,
-        questions: exam.questions.map((q) => ({
-          questionId: q.questionId,
-          questionText: q.questionText,
-          options: q.options,
-          marks: q.marks,
-        })),
-      };
+      return {examId}
     } catch (error) {
-      if (error instanceof NotFoundException || error instanceof ConflictException) throw error;
       this.logger.error(`Error starting exam: ${error.message}`, error.stack);
-      throw new BadRequestException('Failed to start exam');
+      throw new BadRequestException(error.message || 'Failed to start exam');
     }
   }
 
-  // USER-FACING: Submit exam answers
-  async submitExam(examId: string, submitExamDto: SubmitExamDto): Promise<any> {
+  // Submit exam answers
+  async submitExam(submitExamDto: SubmitExamDto): Promise<any> {
     try {
-      const exam = await this.examModel.findById(examId).exec();
+       const {
+        examId,
+        userId,
+        paperId,
+        departmentId,
+        responses,
+        attemptedQuestions = 0,
+        unattemptedQuestions = 0,
+        remarks,
+      } = submitExamDto;
+
+      // Find existing exam attempt
+      const exam = await this.examModel.findOne({ examId, userId }).exec();
       if (!exam) {
-        throw new NotFoundException(`Exam with ID ${examId} not found`);
+        throw new NotFoundException(`Exam attempt with ID ${examId} for ${userId} not found`);
       }
 
-      const { userId, answers } = submitExamDto;
+      // Fetch paper
+      const paper = await this.papersService.findById(paperId);
+      if (!paper) {
+        throw new NotFoundException(`Paper with ID ${paperId} not found`);
+      }
 
-      // Find active session
-      const sessionIndex = exam.sessions.findIndex(
-        (s) => s.userId === userId && !s.submittedAt,
+      if (exam.status !== 'in-progress') {
+        throw new BadRequestException(
+          `Exam ${examId} is already ${exam.status}`,
+        );
+      }
+
+      // Extract scoring parameters from paper schema
+      const maxScore = paper.totalQuestions; // Assuming 1 mark per question
+      const passingScore = paper.passMarks;
+      const negativeMarkingPenalty = paper.negativeMarking; // Penalty per wrong answer
+
+      // Fetch correct answers from papers service
+      const answersData = await this.papersService.fetchAnswersForDepartmentPaper(
+        departmentId,
+        paperId,
       );
 
-      if (sessionIndex === -1) {
-        throw new NotFoundException('No active exam session found for this user');
+      if (!answersData || answersData.length === 0) {
+        throw new NotFoundException(
+          `No answers found for paper ${paperId}`,
+        );
       }
 
-      // Calculate score
-      let score = 0;
-      const questionMap = new Map(exam.questions.map((q) => [q.questionId, q]));
+      // Build a map of correct answers
+      const correctAnswersMap = new Map();
+      answersData[0].answers.forEach((answer: any) => {
+        correctAnswersMap.set(answer.id, answer.correct);
+      });
 
-      answers.forEach((ans) => {
-        const question = questionMap.get(ans.questionId);
-        if (question && question.correctAnswer === ans.answer) {
-          score += question.marks;
+      // Evaluate responses
+      let correctAnswers = 0;
+      responses.forEach((response) => {
+        const correctAnswer = correctAnswersMap.get(response.questionId);
+        if (correctAnswer !== undefined && response.selectedOption === correctAnswer) {
+          correctAnswers++;
         }
       });
 
-      const isPassed = exam.passingScore ? score >= exam.passingScore : true;
+      const incorrectAnswers = attemptedQuestions - correctAnswers;
+      
+      // Calculate score with negative marking
+      const positiveMarks = correctAnswers * 1; // 1 mark per correct answer
+      const negativeMarks = incorrectAnswers * negativeMarkingPenalty;
+      const score = Math.max(0, positiveMarks - negativeMarks); // Ensure score doesn't go below 0
+      
+      const percentage = (score / maxScore) * 100;
+      const accuracy = attemptedQuestions > 0 ? (correctAnswers / attemptedQuestions) * 100 : 0;
+      const isPassed = score >= passingScore;
 
-      // Update session
-      exam.sessions[sessionIndex].answers = answers;
-      exam.sessions[sessionIndex].submittedAt = new Date();
-      exam.sessions[sessionIndex].score = score;
-      exam.sessions[sessionIndex].isPassed = isPassed;
+      // Update exam record
+      exam.responses = responses;
+      exam.totalQuestions = paper.totalQuestions;
+      exam.attemptedQuestions = attemptedQuestions;
+      exam.unattemptedQuestions = unattemptedQuestions;
+      exam.correctAnswers = correctAnswers;
+      exam.incorrectAnswers = incorrectAnswers;
+      exam.score = score;
+      exam.maxScore = maxScore;
+      exam.passingScore = passingScore;
+      exam.percentage = percentage;
+      exam.accuracy = accuracy;
+      exam.endTime = new Date();
+      exam.status = 'submitted';
+      exam.isPassed = isPassed;
+      exam.remarks = remarks;
 
       await exam.save();
 
-      this.logger.log(`Exam submitted by user ${userId} for exam ${examId}. Score: ${score}`);
+      this.logger.log(
+        `Exam submitted successfully. Score: ${score}/${maxScore} (${percentage.toFixed(2)}%)`,
+      ); 
 
       return {
+        examId,
         score,
-        totalMarks: exam.totalMarks,
+        maxScore,
+        passingScore,
+        percentage: percentage.toFixed(2),
+        accuracy: accuracy.toFixed(2),
         isPassed,
-        submittedAt: exam.sessions[sessionIndex].submittedAt,
+        correctAnswers,
+        incorrectAnswers,
+        totalQuestions: paper.totalQuestions,
+        attemptedQuestions,
+        unattemptedQuestions,
+        negativeMarking: negativeMarkingPenalty,
+        submittedAt: exam.endTime,
       };
     } catch (error) {
-      if (error instanceof NotFoundException) throw error;
       this.logger.error(`Error submitting exam: ${error.message}`, error.stack);
-      throw new BadRequestException('Failed to submit exam');
-    }
-  }
-
-  // USER-FACING: Get exam results
-  async getExamResults(examId: string, userId: string): Promise<any> {
-    try {
-      const exam = await this.examModel.findById(examId).exec();
-      if (!exam) {
-        throw new NotFoundException(`Exam with ID ${examId} not found`);
-      }
-
-      const userSessions = exam.sessions.filter(
-        (s) => s.userId === userId && s.submittedAt,
-      );
-
-      if (userSessions.length === 0) {
-        throw new NotFoundException('No completed exam sessions found for this user');
-      }
-
-      return {
-        examId: exam._id,
-        title: exam.title,
-        attempts: userSessions.map((session) => ({
-          startedAt: session.startedAt,
-          submittedAt: session.submittedAt,
-          score: session.score,
-          totalMarks: exam.totalMarks,
-          isPassed: session.isPassed,
-        })),
-      };
-    } catch (error) {
-      if (error instanceof NotFoundException) throw error;
-      this.logger.error(`Error fetching results: ${error.message}`, error.stack);
-      throw new BadRequestException('Failed to fetch exam results');
+      throw new BadRequestException(error.message || 'Failed to submit exam');
     }
   }
 }
- */
