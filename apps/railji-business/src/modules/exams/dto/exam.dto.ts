@@ -54,11 +54,11 @@ export class SubmitExamDto {
   @IsNotEmpty()
   userId: string;
 
-    @IsString()
+  @IsString()
   @IsNotEmpty()
   paperId: string;
 
-    @IsString()
+  @IsString()
   @IsNotEmpty()
   departmentId: string;
 
@@ -74,11 +74,6 @@ export class SubmitExamDto {
   @IsNumber()
   @IsOptional()
   unattemptedQuestions?: number;
-
-  @ValidateNested()
-  @Type(() => DeviceInfoDto)
-  @IsNotEmpty()
-  deviceInfo: DeviceInfoDto;
 
   @IsString()
   @IsOptional()
@@ -97,13 +92,4 @@ export class StartExamDto {
   @IsString()
   @IsNotEmpty()
   departmentId: string;
-
-  @IsString()
-  @IsNotEmpty()
-  startTime: string;
-
-  @ValidateNested()
-  @Type(() => DeviceInfoDto)
-  @IsNotEmpty()
-  deviceInfo: DeviceInfoDto;
 }
