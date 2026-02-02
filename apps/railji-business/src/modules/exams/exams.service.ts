@@ -23,13 +23,7 @@ export class ExamsService {
   // Start exam session
   async startExam(startExamDto: StartExamDto): Promise<any> {
     try {
-      const {
-        userId,
-        paperId,
-        departmentId,
-        deviceInfo,
-        startTime,
-      } = startExamDto;
+      const { userId, paperId, departmentId } = startExamDto;
 
       // Generate unique attempt ID
       const examId = randomUUID();
@@ -42,11 +36,14 @@ export class ExamsService {
         departmentId,
         responses: [],
         status: 'in-progress',
-        startTime,
-        deviceInfo,
+        startTime: new Date(),
+        deviceInfo: {
+          device: 'Unknown',
+          ipAddress: 'Unknown',
+        },
       });
 
-      return {examId}
+      return { examId };
     } catch (error) {
       this.logger.error(`Error starting exam: ${error.message}`, error.stack);
       throw new BadRequestException(error.message || 'Failed to start exam');
@@ -56,7 +53,7 @@ export class ExamsService {
   // Submit exam answers
   async submitExam(submitExamDto: SubmitExamDto): Promise<any> {
     try {
-       const {
+      const {
         examId,
         userId,
         paperId,
@@ -70,7 +67,9 @@ export class ExamsService {
       // Find existing exam attempt
       const exam = await this.examModel.findOne({ examId, userId }).exec();
       if (!exam) {
-        throw new NotFoundException(`Exam attempt with ID ${examId} for ${userId} not found`);
+        throw new NotFoundException(
+          `Exam attempt with ID ${examId} for ${userId} not found`,
+        );
       }
 
       // Fetch paper
@@ -91,15 +90,14 @@ export class ExamsService {
       const negativeMarkingPenalty = paper.negativeMarking; // Penalty per wrong answer
 
       // Fetch correct answers from papers service
-      const answersData = await this.papersService.fetchAnswersForDepartmentPaper(
-        departmentId,
-        paperId,
-      );
+      const answersData =
+        await this.papersService.fetchAnswersForDepartmentPaper(
+          departmentId,
+          paperId,
+        );
 
       if (!answersData || answersData.length === 0) {
-        throw new NotFoundException(
-          `No answers found for paper ${paperId}`,
-        );
+        throw new NotFoundException(`No answers found for paper ${paperId}`);
       }
 
       // Build a map of correct answers
@@ -112,20 +110,26 @@ export class ExamsService {
       let correctAnswers = 0;
       responses.forEach((response) => {
         const correctAnswer = correctAnswersMap.get(response.questionId);
-        if (correctAnswer !== undefined && response.selectedOption === correctAnswer) {
+        if (
+          correctAnswer !== undefined &&
+          response.selectedOption === correctAnswer
+        ) {
           correctAnswers++;
         }
       });
 
       const incorrectAnswers = attemptedQuestions - correctAnswers;
-      
+
       // Calculate score with negative marking
       const positiveMarks = correctAnswers * 1; // 1 mark per correct answer
       const negativeMarks = incorrectAnswers * negativeMarkingPenalty;
       const score = Math.max(0, positiveMarks - negativeMarks); // Ensure score doesn't go below 0
-      
+
       const percentage = (score / maxScore) * 100;
-      const accuracy = attemptedQuestions > 0 ? (correctAnswers / attemptedQuestions) * 100 : 0;
+      const accuracy =
+        attemptedQuestions > 0
+          ? (correctAnswers / attemptedQuestions) * 100
+          : 0;
       const isPassed = score >= passingScore;
 
       // Update exam record
@@ -149,7 +153,7 @@ export class ExamsService {
 
       this.logger.log(
         `Exam submitted successfully. Score: ${score}/${maxScore} (${percentage.toFixed(2)}%)`,
-      ); 
+      );
 
       return {
         examId,
