@@ -10,7 +10,6 @@ import { Paper } from './schemas/paper.schema';
 import { CreatePaperDto, UpdatePaperDto } from './dto/paper.dto';
 import { QuestionBank } from './schemas/question-bank.schema';
 import { CacheService } from '@railji/shared';
-
 export interface PaperCodesByType {
   general: string[];
   nonGeneral: string[];
@@ -88,11 +87,11 @@ export class PapersService {
     }
   }
 
-  async findById(id: string): Promise<Paper> {
+  async findById(paperId: string): Promise<Paper> {
     try {
-      const paper = await this.paperModel.findById(id).exec();
+      const paper = await this.paperModel.findOne({ paperId }).exec();
       if (!paper) {
-        throw new NotFoundException(`Paper with ID ${id} not found`);
+        throw new NotFoundException(`Paper with ID ${paperId} not found`);
       }
       return paper;
     } catch (error) {
@@ -124,9 +123,19 @@ export class PapersService {
                 {
                   paperType: 'general',
                 },
-                // Non-general papers from specific department only
+                // Non-general papers from specific departments only (using DEPARTMENTS constant)
                 {
-                  departmentId,
+                  departmentId: {
+                    $in: [
+                      'DEPT001',
+                      'DEPT002',
+                      'DEPT003',
+                      'DEPT004',
+                      'DEPT005',
+                      'DEPT006',
+                      'DEPT007',
+                    ],
+                  },
                   paperType: { $ne: 'general' },
                 },
               ],

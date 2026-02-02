@@ -32,12 +32,18 @@ export class DepartmentsService {
     }
   }
 
-  async fetchAllDepartments(query?: any): Promise<{ departments: Department[]; metadata: { general: Department | null } }> {
+  async fetchAllDepartments(query?: any): Promise<{
+    departments: Department[];
+    metadata: { general: Department | null };
+  }> {
     try {
       const departments = await this.departmentModel.find(query || {}).exec();
-      const general = departments.find(dept => dept.departmentId === 'GENERAL') || null;
-      const filtered = departments.filter(dept => dept.departmentId !== 'GENERAL');
-      
+      const general =
+        departments.find((dept) => dept.departmentId === 'GENERAL') || null;
+      const filtered = departments.filter(
+        (dept) => dept.departmentId !== 'GENERAL',
+      );
+
       this.logger.log(`Found ${filtered.length} departments`);
       return { departments: filtered, metadata: { general } };
     } catch (error) {
