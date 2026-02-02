@@ -19,19 +19,19 @@ export const ResponseSchema = SchemaFactory.createForClass(Response);
 
 @Schema({ _id: false })
 export class DeviceInfo {
-  @Prop({ required: true })
+  @Prop({ default: 'Unknown' })
   browser: string;
 
-  @Prop({ required: true })
+  @Prop({ default: 'Unknown' })
   os: string;
 
-  @Prop({ required: true })
+  @Prop({ default: 'Unknown' })
   device: string;
 
-  @Prop({ required: true })
+  @Prop({ default: 'Unknown' })
   ipAddress: string;
 
-  @Prop({ required: true })
+  @Prop({ default: 'Unknown' })
   userAgent: string;
 }
 

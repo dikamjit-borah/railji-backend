@@ -40,6 +40,7 @@ export class ExamsService {
         deviceInfo: {
           device: 'Unknown',
           ipAddress: 'Unknown',
+          userAgent: 'Unknown',
         },
       });
 
