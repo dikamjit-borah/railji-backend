@@ -23,6 +23,16 @@ export class PapersController {
     };
   }
 
+  @Get('top')
+  @HttpCode(HttpStatus.OK)
+  async getTopPapers() {
+    const papers = await this.papersService.getTopPapers();
+    return {
+      message: 'Top papers retrieved successfully',
+      data: papers,
+    };
+  }
+
   @Get(':departmentId')
   @HttpCode(HttpStatus.OK)
   async fetchPapersForDepartment(
