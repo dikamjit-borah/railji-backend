@@ -10,6 +10,8 @@ import { Paper } from './schemas/paper.schema';
 import { CreatePaperDto, UpdatePaperDto } from './dto/paper.dto';
 import { QuestionBank } from './schemas/question-bank.schema';
 import { CacheService } from '@railji/shared';
+import { cleanObjectArrays, ensureCleanArray } from '../../utils/utils';
+
 export interface PaperCodesByType {
   general: string[];
   nonGeneral: string[];
@@ -189,19 +191,22 @@ export class PapersService {
 
       result.forEach((item: { type: string; paperCodes: string[] }) => {
         if (item.type === 'general') {
-          paperCodesByType.general = item.paperCodes;
+          paperCodesByType.general = ensureCleanArray(item.paperCodes);
         } else {
-          paperCodesByType.nonGeneral = item.paperCodes;
+          paperCodesByType.nonGeneral = ensureCleanArray(item.paperCodes);
         }
       });
 
+      // Clean the results to ensure no null values
+      const cleanedPaperCodes = cleanObjectArrays(paperCodesByType);
+
       // Cache the results
-      this.cacheService.set(cacheKey, paperCodesByType, this.DEFAULT_TTL);
+      this.cacheService.set(cacheKey, cleanedPaperCodes, this.DEFAULT_TTL);
       this.logger.debug(
-        `Cached ${paperCodesByType.general.length} general and ${paperCodesByType.nonGeneral.length} non-general paper codes for department: ${departmentId}`,
+        `Cached ${cleanedPaperCodes.general.length} general and ${cleanedPaperCodes.nonGeneral.length} non-general paper codes for department: ${departmentId}`,
       );
 
-      return paperCodesByType;
+      return cleanedPaperCodes;
     } catch (error) {
       this.logger.error(
         `Error fetching paper codes by type for department: ${error.message}`,
