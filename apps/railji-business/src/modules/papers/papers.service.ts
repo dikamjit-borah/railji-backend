@@ -87,6 +87,16 @@ export class PapersService {
     }
   }
 
+  async getTopPapers(): Promise<Paper[]> {
+    try {
+      const papers = await this.paperModel.find().limit(6).exec();
+      return papers;
+    } catch (error) {
+      this.logger.error(`Error fetching top papers: ${error.message}`, error.stack);
+      throw new BadRequestException('Failed to fetch top papers');
+    }
+  }
+
   async findById(paperId: string): Promise<Paper> {
     try {
       const paper = await this.paperModel.findOne({ paperId }).exec();
