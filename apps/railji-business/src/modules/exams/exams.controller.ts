@@ -1,4 +1,12 @@
-import { Controller, Post, Body, HttpStatus, HttpCode } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  HttpStatus,
+  HttpCode,
+  Get,
+  Param,
+} from '@nestjs/common';
 import { ExamsService } from './exams.service';
 import { SubmitExamDto, StartExamDto } from './dto/exam.dto';
 
@@ -24,6 +32,17 @@ export class ExamsController {
     const result = await this.examsService.submitExam(submitExamDto);
     return {
       message: 'Exam submitted successfully',
+      data: result,
+    };
+  }
+
+  // GET /exams/:examId - Fetch exam by examId
+  @Get(':examId')
+  @HttpCode(HttpStatus.OK)
+  async getExam(@Param('examId') examId: string) {
+    const result = await this.examsService.fetchExamByExamId(examId);
+    return {
+      message: 'Exam fetched successfully',
       data: result,
     };
   }

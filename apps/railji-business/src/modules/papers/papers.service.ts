@@ -7,7 +7,6 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Paper } from './schemas/paper.schema';
-import { CreatePaperDto, UpdatePaperDto } from './dto/paper.dto';
 import { QuestionBank } from './schemas/question-bank.schema';
 import { CacheService } from '@railji/shared';
 import { cleanObjectArrays, ensureCleanArray } from '../../utils/utils';
@@ -21,6 +20,7 @@ export interface PaperCodesByType {
 export class PapersService {
   private readonly logger = new Logger(PapersService.name);
   private readonly PAPER_CODES_PREFIX = 'paper_codes';
+  private readonly TOP_PAPERS_CACHE_KEY = 'top_papers';
   private readonly DEFAULT_TTL = 30 * 60 * 1000; // 30 minutes
 
   constructor(
@@ -35,49 +35,9 @@ export class PapersService {
     return `${this.PAPER_CODES_PREFIX}:${departmentId}:${filtersStr}`;
   }
 
-  private clearDepartmentCache(departmentId: string): void {
-    const pattern = `^${this.PAPER_CODES_PREFIX}:${departmentId}:`;
-    const deletedCount = this.cacheService.deletePattern(pattern);
-    if (deletedCount > 0) {
-      this.logger.debug(
-        `Cleared ${deletedCount} cache entries for department: ${departmentId}`,
-      );
-    }
-  }
-
-  private clearAllDepartmentCaches(): void {
-    const pattern = `^${this.PAPER_CODES_PREFIX}:`;
-    const deletedCount = this.cacheService.deletePattern(pattern);
-    if (deletedCount > 0) {
-      this.logger.debug(
-        `Cleared all paper codes cache: ${deletedCount} entries removed`,
-      );
-    }
-  }
-
   clearAllCache(): void {
     this.cacheService.clear();
-    this.logger.debug('Cleared all paper codes cache');
-  }
-
-  async create(createPaperDto: CreatePaperDto): Promise<Paper> {
-    try {
-      const paper = await this.paperModel.create(createPaperDto);
-
-      // Clear cache appropriately based on paper type
-      if (paper.paperType === 'general') {
-        // General papers affect all departments, clear all caches
-        this.clearAllDepartmentCaches();
-      } else {
-        // Non-general papers only affect specific department
-        this.clearDepartmentCache(paper.departmentId);
-      }
-
-      return paper;
-    } catch (error) {
-      this.logger.error(`Error creating paper: ${error.message}`, error.stack);
-      throw new BadRequestException('Failed to create paper');
-    }
+    this.logger.debug('Cleared all paper codes cache and top papers cache');
   }
 
   async findAll(query?: any): Promise<Paper[]> {
@@ -91,10 +51,31 @@ export class PapersService {
 
   async getTopPapers(): Promise<Paper[]> {
     try {
+      // Check cache first
+      const cached = this.cacheService.get<Paper[]>(this.TOP_PAPERS_CACHE_KEY);
+
+      if (cached) {
+        this.logger.debug('Returning cached top papers');
+        return cached;
+      }
+
+      // Fetch from database
       const papers = await this.paperModel.find().limit(6).exec();
+
+      // Cache the result
+      this.cacheService.set(
+        this.TOP_PAPERS_CACHE_KEY,
+        papers,
+        this.DEFAULT_TTL,
+      );
+      this.logger.debug(`Cached ${papers.length} top papers`);
+
       return papers;
     } catch (error) {
-      this.logger.error(`Error fetching top papers: ${error.message}`, error.stack);
+      this.logger.error(
+        `Error fetching top papers: ${error.message}`,
+        error.stack,
+      );
       throw new BadRequestException('Failed to fetch top papers');
     }
   }
@@ -330,40 +311,6 @@ export class PapersService {
         error.stack,
       );
       throw new BadRequestException('Failed to fetch papers');
-    }
-  }
-
-  async update(
-    paperId: string,
-    updatePaperDto: UpdatePaperDto,
-  ): Promise<Paper> {
-    try {
-      const existingPaper = await this.paperModel.findById(paperId).exec();
-      if (!existingPaper) {
-        throw new NotFoundException(`Paper with ID ${paperId} not found`);
-      }
-
-      const paper = await this.paperModel
-        .findByIdAndUpdate(paperId, updatePaperDto, { new: true })
-        .exec();
-
-      // Clear cache appropriately based on paper type changes
-      const oldPaperType = existingPaper.paperType;
-      const newPaperType = updatePaperDto.paperType || oldPaperType;
-
-      if (oldPaperType === 'general' || newPaperType === 'general') {
-        // If changing to/from general, clear all caches
-        this.clearAllDepartmentCaches();
-      } else {
-        // Only non-general papers, clear specific department cache
-        this.clearDepartmentCache(existingPaper.departmentId);
-      }
-
-      return paper!;
-    } catch (error) {
-      if (error instanceof NotFoundException) throw error;
-      this.logger.error(`Error updating paper: ${error.message}`, error.stack);
-      throw new BadRequestException('Failed to update paper');
     }
   }
 }

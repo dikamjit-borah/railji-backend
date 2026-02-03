@@ -177,4 +177,23 @@ export class ExamsService {
       throw new BadRequestException(error.message || 'Failed to submit exam');
     }
   }
+
+  // Get exam by examId
+  async fetchExamByExamId(examId: string): Promise<any> {
+    try {
+      const exam = await this.examModel.findOne({ examId }).exec();
+
+      if (!exam) {
+        throw new NotFoundException(`Exam with ID ${examId} not found`);
+      }
+
+      return exam;
+    } catch (error) {
+      this.logger.error(`Error fetching exam: ${error.message}`, error.stack);
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new BadRequestException(error.message || 'Failed to fetch exam');
+    }
+  }
 }
