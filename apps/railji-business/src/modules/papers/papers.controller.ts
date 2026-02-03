@@ -43,10 +43,10 @@ export class PapersController {
     const limit = queryDto.limit || 10;
 
     // Build search query from optional filters
-    const searchQuery: any = {};
+    const searchQuery: FetchPapersQueryDto = {};
     if (queryDto.paperCode) searchQuery.paperCode = queryDto.paperCode;
     if (queryDto.paperType) searchQuery.paperType = queryDto.paperType;
-    if (queryDto.year) searchQuery.paperType = queryDto.year;
+    if (queryDto.year) searchQuery.year = queryDto.year;
 
     const result = await this.papersService.fetchPapersForDepartment(
       departmentId,

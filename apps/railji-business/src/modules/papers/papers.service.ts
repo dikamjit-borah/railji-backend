@@ -10,6 +10,7 @@ import { Paper } from './schemas/paper.schema';
 import { QuestionBank } from './schemas/question-bank.schema';
 import { CacheService } from '@railji/shared';
 import { cleanObjectArrays, ensureCleanArray } from '../../utils/utils';
+import { FetchPapersQueryDto } from './dto/paper.dto';
 
 export interface PaperCodesByType {
   general: string[];
@@ -116,19 +117,9 @@ export class PapersService {
                 {
                   paperType: 'general',
                 },
-                // Non-general papers from specific departments only (using DEPARTMENTS constant)
+                // Non-general papers from specific department only
                 {
-                  departmentId: {
-                    $in: [
-                      'DEPT001',
-                      'DEPT002',
-                      'DEPT003',
-                      'DEPT004',
-                      'DEPT005',
-                      'DEPT006',
-                      'DEPT007',
-                    ],
-                  },
+                  departmentId,
                   paperType: { $ne: 'general' },
                 },
               ],
@@ -203,7 +194,7 @@ export class PapersService {
     departmentId: string,
     page: number = 1,
     limit: number = 10,
-    query?: any,
+    query?: FetchPapersQueryDto,
   ): Promise<{
     paperCodes: PaperCodesByType;
     papers: Paper[];
@@ -216,7 +207,7 @@ export class PapersService {
 
       // Build the query with departmentId and any additional filters
       const searchQuery = {
-        departmentId,
+        ...(query.paperType !== 'general' && { departmentId }),
         ...query,
       };
 

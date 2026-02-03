@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  Logger,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Department } from './schemas/department.schema';
@@ -21,18 +16,12 @@ export class DepartmentsService {
     private readonly cacheService: CacheService,
   ) {}
 
-  async fetchAllDepartments(query?: any): Promise<{
-    departments: Department[];
-    metadata: { general: Department | null };
-  }> {
+  async fetchAllDepartments(query?: any): Promise<Department[]> {
     try {
       const cacheKey = `${this.DEPARTMENTS_CACHE_KEY}`;
 
       // Check cache first
-      const cached = this.cacheService.get<{
-        departments: Department[];
-        metadata: { general: Department | null };
-      }>(cacheKey);
+      const cached = this.cacheService.get<Department[]>(cacheKey);
 
       if (cached) {
         this.logger.debug('Returning cached departments data');
@@ -41,46 +30,21 @@ export class DepartmentsService {
 
       // Fetch from database
       const departments = await this.departmentModel.find(query || {}).exec();
-      const general =
-        departments.find((dept) => dept.departmentId === 'GENERAL') || null;
-      const filtered = departments.filter(
-        (dept) => dept.departmentId !== 'GENERAL',
-      );
-
-      const result = { departments: filtered, metadata: { general } };
 
       // Cache the result
-      this.cacheService.set(cacheKey, result, this.CACHE_TTL);
+      this.cacheService.set(cacheKey, departments, this.CACHE_TTL);
       this.logger.debug(
-        `Cached departments data with ${filtered.length} departments`,
+        `Cached departments data with ${departments.length} departments`,
       );
 
-      this.logger.log(`Found ${filtered.length} departments`);
-      return result;
+      this.logger.log(`Found ${departments.length} departments`);
+      return departments;
     } catch (error) {
       this.logger.error(
         `Error fetching departments: ${error.message}`,
         error.stack,
       );
       throw new BadRequestException('Failed to fetch departments');
-    }
-  }
-
-  async findById(id: string): Promise<Department> {
-    try {
-      const department = await this.departmentModel.findById(id).exec();
-      if (!department) {
-        this.logger.warn(`Department not found with ID: ${id}`);
-        throw new NotFoundException(`Department with ID ${id} not found`);
-      }
-      return department;
-    } catch (error) {
-      if (error instanceof NotFoundException) throw error;
-      this.logger.error(
-        `Error finding department: ${error.message}`,
-        error.stack,
-      );
-      throw new BadRequestException('Failed to fetch department');
     }
   }
 }
