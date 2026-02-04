@@ -1,4 +1,4 @@
-import { Controller, Get, Query, HttpStatus, HttpCode } from '@nestjs/common';
+import { Controller, Get, Query, HttpStatus, HttpCode, Param } from '@nestjs/common';
 import { DepartmentsService } from './departments.service';
 
 @Controller('departments')
@@ -11,6 +11,22 @@ export class DepartmentsController {
     const result = await this.departmentsService.fetchAllDepartments(query);
     return {
       message: 'Departments retrieved successfully',
+      data: result,
+    };
+  }
+
+  @Get(':departmentId/materials')
+  @HttpCode(HttpStatus.OK)
+  async getMaterialsByDepartment(
+    @Param('departmentId') departmentId: string,
+    @Query() query?: any,
+  ) {
+    const result = await this.departmentsService.fetchMaterialsByDepartment(
+      departmentId,
+      query,
+    );
+    return {
+      message: 'Materials retrieved successfully',
       data: result,
     };
   }

@@ -2,6 +2,7 @@ import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Department } from './schemas/department.schema';
+import { Material } from './schemas/material.schema';
 import { CacheService } from '@railji/shared';
 
 @Injectable()
@@ -13,6 +14,8 @@ export class DepartmentsService {
   constructor(
     @InjectModel(Department.name)
     private readonly departmentModel: Model<Department>,
+    @InjectModel(Material.name)
+    private readonly materialModel: Model<Material>,
     private readonly cacheService: CacheService,
   ) {}
 
@@ -45,6 +48,41 @@ export class DepartmentsService {
         error.stack,
       );
       throw new BadRequestException('Failed to fetch departments');
+    }
+  }
+
+  async fetchMaterialsByDepartment(departmentId: string, query?: any): Promise<Material[]> {
+    try {
+      const cacheKey = `materials_${departmentId}`;
+
+      // Check cache first
+      const cached = this.cacheService.get<Material[]>(cacheKey);
+
+      if (cached) {
+        this.logger.debug(`Returning cached materials data for department ${departmentId}`);
+        return cached;
+      }
+
+      // Build filter query
+      const filter = { departmentId, isActive: true, ...query };
+
+      // Fetch from database
+      const materials = await this.materialModel.find(filter).exec();
+
+      // Cache the result
+      this.cacheService.set(cacheKey, materials, this.CACHE_TTL);
+      this.logger.debug(
+        `Cached materials data for department ${departmentId} with ${materials.length} materials`,
+      );
+
+      this.logger.log(`Found ${materials.length} materials for department ${departmentId}`);
+      return materials;
+    } catch (error) {
+      this.logger.error(
+        `Error fetching materials for department ${departmentId}: ${error.message}`,
+        error.stack,
+      );
+      throw new BadRequestException('Failed to fetch materials');
     }
   }
 }
