@@ -1,12 +1,8 @@
-import {
-  Injectable,
-  Logger,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Department } from './schemas/department.schema';
+import { Material } from './schemas/material.schema';
 import { CacheService } from '@railji/shared';
 
 @Injectable()
@@ -18,21 +14,17 @@ export class DepartmentsService {
   constructor(
     @InjectModel(Department.name)
     private readonly departmentModel: Model<Department>,
+    @InjectModel(Material.name)
+    private readonly materialModel: Model<Material>,
     private readonly cacheService: CacheService,
   ) {}
 
-  async fetchAllDepartments(query?: any): Promise<{
-    departments: Department[];
-    metadata: { general: Department | null };
-  }> {
+  async fetchAllDepartments(query?: any): Promise<Department[]> {
     try {
       const cacheKey = `${this.DEPARTMENTS_CACHE_KEY}`;
 
       // Check cache first
-      const cached = this.cacheService.get<{
-        departments: Department[];
-        metadata: { general: Department | null };
-      }>(cacheKey);
+      const cached = this.cacheService.get<Department[]>(cacheKey);
 
       if (cached) {
         this.logger.debug('Returning cached departments data');
@@ -41,22 +33,15 @@ export class DepartmentsService {
 
       // Fetch from database
       const departments = await this.departmentModel.find(query || {}).exec();
-      const general =
-        departments.find((dept) => dept.departmentId === 'GENERAL') || null;
-      const filtered = departments.filter(
-        (dept) => dept.departmentId !== 'GENERAL',
-      );
-
-      const result = { departments: filtered, metadata: { general } };
 
       // Cache the result
-      this.cacheService.set(cacheKey, result, this.CACHE_TTL);
+      this.cacheService.set(cacheKey, departments, this.CACHE_TTL);
       this.logger.debug(
-        `Cached departments data with ${filtered.length} departments`,
+        `Cached departments data with ${departments.length} departments`,
       );
 
-      this.logger.log(`Found ${filtered.length} departments`);
-      return result;
+      this.logger.log(`Found ${departments.length} departments`);
+      return departments;
     } catch (error) {
       this.logger.error(
         `Error fetching departments: ${error.message}`,
@@ -66,21 +51,38 @@ export class DepartmentsService {
     }
   }
 
-  async findById(id: string): Promise<Department> {
+  async fetchMaterialsByDepartment(departmentId: string, query?: any): Promise<Material[]> {
     try {
-      const department = await this.departmentModel.findById(id).exec();
-      if (!department) {
-        this.logger.warn(`Department not found with ID: ${id}`);
-        throw new NotFoundException(`Department with ID ${id} not found`);
+      const cacheKey = `materials_${departmentId}`;
+
+      // Check cache first
+      const cached = this.cacheService.get<Material[]>(cacheKey);
+
+      if (cached) {
+        this.logger.debug(`Returning cached materials data for department ${departmentId}`);
+        return cached;
       }
-      return department;
+
+      // Build filter query
+      const filter = { departmentId, isActive: true, ...query };
+
+      // Fetch from database
+      const materials = await this.materialModel.find(filter).exec();
+
+      // Cache the result
+      this.cacheService.set(cacheKey, materials, this.CACHE_TTL);
+      this.logger.debug(
+        `Cached materials data for department ${departmentId} with ${materials.length} materials`,
+      );
+
+      this.logger.log(`Found ${materials.length} materials for department ${departmentId}`);
+      return materials;
     } catch (error) {
-      if (error instanceof NotFoundException) throw error;
       this.logger.error(
-        `Error finding department: ${error.message}`,
+        `Error fetching materials for department ${departmentId}: ${error.message}`,
         error.stack,
       );
-      throw new BadRequestException('Failed to fetch department');
+      throw new BadRequestException('Failed to fetch materials');
     }
   }
 }

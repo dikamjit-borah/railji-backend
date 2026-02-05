@@ -1,31 +1,9 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Put,
-  Body,
-  Param,
-  Query,
-  HttpStatus,
-  HttpCode,
-} from '@nestjs/common';
+import { Controller, Get, Query, HttpStatus, HttpCode, Param } from '@nestjs/common';
 import { DepartmentsService } from './departments.service';
-import { CreateDepartmentDto, UpdateDepartmentDto } from './dto/department.dto';
 
 @Controller('departments')
 export class DepartmentsController {
   constructor(private readonly departmentsService: DepartmentsService) {}
-
-  @Post()
-  @HttpCode(HttpStatus.CREATED)
-  async create(@Body() createDepartmentDto: CreateDepartmentDto) {
-    const department =
-      await this.departmentsService.create(createDepartmentDto);
-    return {
-      message: 'Department created successfully',
-      data: department,
-    };
-  }
 
   @Get()
   @HttpCode(HttpStatus.OK)
@@ -37,29 +15,19 @@ export class DepartmentsController {
     };
   }
 
-  @Get(':departmentId')
+  @Get(':departmentId/materials')
   @HttpCode(HttpStatus.OK)
-  async findById(@Param('departmentId') departmentId: string) {
-    const department = await this.departmentsService.findById(departmentId);
-    return {
-      message: 'Department retrieved successfully',
-      data: department,
-    };
-  }
-
-  @Put(':departmentId')
-  @HttpCode(HttpStatus.OK)
-  async update(
+  async getMaterialsByDepartment(
     @Param('departmentId') departmentId: string,
-    @Body() updateDepartmentDto: UpdateDepartmentDto,
+    @Query() query?: any,
   ) {
-    const department = await this.departmentsService.update(
+    const result = await this.departmentsService.fetchMaterialsByDepartment(
       departmentId,
-      updateDepartmentDto,
+      query,
     );
     return {
-      message: 'Department updated successfully',
-      data: department,
+      message: 'Materials retrieved successfully',
+      data: result,
     };
   }
 }
