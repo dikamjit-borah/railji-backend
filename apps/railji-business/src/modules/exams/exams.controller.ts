@@ -36,8 +36,8 @@ export class ExamsController {
     };
   }
 
-  // GET /exams/:examId - Fetch exam by examId
-  @Get(':examId')
+  // GET /result/:examId - Fetch exam by examId
+  @Get('result/:examId')
   @HttpCode(HttpStatus.OK)
   async getExam(@Param('examId') examId: string) {
     const result = await this.examsService.fetchExamByExamId(examId);
