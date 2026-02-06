@@ -244,7 +244,7 @@ export class PapersService {
   ) {
     try {
       const questions = await this.questionBankModel
-        .find({ departmentId, paperId }, { 'questions.correct': 0 })
+        .findOne({ paperId }, { 'questions.correct': 0 })
         .exec();
       return questions;
     } catch (error) {
@@ -261,7 +261,7 @@ export class PapersService {
       const answers = await this.questionBankModel
         .aggregate([
           {
-            $match: { departmentId, paperId },
+            $match: { paperId },
           },
           {
             $project: {
@@ -279,7 +279,7 @@ export class PapersService {
           },
         ])
         .exec();
-      return answers;
+      return answers?.[0];
     } catch (error) {
       this.logger.error(
         `Error finding answers by department and paper: ${error.message}`,
