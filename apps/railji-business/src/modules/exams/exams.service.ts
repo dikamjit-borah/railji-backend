@@ -97,13 +97,13 @@ export class ExamsService {
           paperId,
         );
 
-      if (!answersData || answersData.length === 0) {
+      if (!answersData) {
         throw new NotFoundException(`No answers found for paper ${paperId}`);
       }
 
       // Build a map of correct answers
       const correctAnswersMap = new Map();
-      answersData[0].answers.forEach((answer: any) => {
+      answersData.answers.forEach((answer: any) => {
         correctAnswersMap.set(answer.id, answer.correct);
       });
 
