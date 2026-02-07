@@ -1,9 +1,9 @@
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Department } from './schemas/department.schema';
 import { Material } from './schemas/material.schema';
-import { CacheService } from '@railji/shared';
+import { CacheService, ErrorHandlerService } from '@railji/shared';
 
 @Injectable()
 export class DepartmentsService {
@@ -17,6 +17,7 @@ export class DepartmentsService {
     @InjectModel(Material.name)
     private readonly materialModel: Model<Material>,
     private readonly cacheService: CacheService,
+    private readonly errorHandler: ErrorHandlerService,
   ) {}
 
   async fetchAllDepartments(query?: any): Promise<Department[]> {
@@ -34,6 +35,10 @@ export class DepartmentsService {
       // Fetch from database
       const departments = await this.departmentModel.find(query || {}).exec();
 
+      if (!departments || departments.length === 0) {
+        throw new NotFoundException('No departments found');
+      }
+
       // Cache the result
       this.cacheService.set(cacheKey, departments, this.CACHE_TTL);
       this.logger.debug(
@@ -43,11 +48,7 @@ export class DepartmentsService {
       this.logger.log(`Found ${departments.length} departments`);
       return departments;
     } catch (error) {
-      this.logger.error(
-        `Error fetching departments: ${error.message}`,
-        error.stack,
-      );
-      throw new BadRequestException('Failed to fetch departments');
+      this.errorHandler.handle(error, { context: 'DepartmentsService.fetchAllDepartments' });
     }
   }
 
@@ -69,6 +70,10 @@ export class DepartmentsService {
       // Fetch from database
       const materials = await this.materialModel.find(filter).exec();
 
+      if (!materials || materials.length === 0) {
+        throw new NotFoundException(`No materials found for department ${departmentId}`);
+      }
+
       // Cache the result
       this.cacheService.set(cacheKey, materials, this.CACHE_TTL);
       this.logger.debug(
@@ -78,11 +83,7 @@ export class DepartmentsService {
       this.logger.log(`Found ${materials.length} materials for department ${departmentId}`);
       return materials;
     } catch (error) {
-      this.logger.error(
-        `Error fetching materials for department ${departmentId}: ${error.message}`,
-        error.stack,
-      );
-      throw new BadRequestException('Failed to fetch materials');
+      this.errorHandler.handle(error, { context: 'DepartmentsService.fetchMaterialsByDepartment' });
     }
   }
 }
