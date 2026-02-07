@@ -151,6 +151,8 @@ export class ExamsService {
       exam.status = 'submitted';
       exam.isPassed = isPassed;
       exam.remarks = remarks;
+      exam.timeTaken =
+        (exam.endTime.getTime() - exam.startTime.getTime()) / (1000 * 60); // Time taken in minutes
 
       await exam.save();
 
@@ -190,7 +192,9 @@ export class ExamsService {
 
       return exam;
     } catch (error) {
-      this.errorHandler.handle(error, { context: 'ExamsService.fetchExamByExamId' });
+      this.errorHandler.handle(error, {
+        context: 'ExamsService.fetchExamByExamId',
+      });
     }
   }
 }

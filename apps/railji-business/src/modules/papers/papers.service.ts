@@ -229,13 +229,37 @@ export class PapersService {
     paperId: string,
   ) {
     try {
-      const questions = await this.questionBankModel
-        .findOne({ paperId }, { 'questions.correct': 0 })
+      const result = await this.questionBankModel
+        .aggregate([
+          {
+            $match: { paperId },
+          },
+          {
+            $lookup: {
+              from: 'papers',
+              localField: 'paperId',
+              foreignField: 'paperId',
+              as: 'paperDetails',
+            },
+          },
+          {
+            $unwind: {
+              path: '$paperDetails',
+              preserveNullAndEmptyArrays: true,
+            },
+          },
+          {
+            $project: {
+              'questions.correct': 0,
+            },
+          },
+        ])
         .exec();
-      if (!questions) {
+
+      if (!result || result.length === 0) {
         throw new NotFoundException(`Questions not found for paper ${paperId}`);
       }
-      return questions;
+      return result[0];
     } catch (error) {
       this.errorHandler.handle(error, { context: 'PapersService.fetchQuestionsForDepartmentPaper' });
     }
