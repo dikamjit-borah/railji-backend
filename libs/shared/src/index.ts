@@ -26,5 +26,10 @@ export {
 export { CacheService } from './services/cache.service';
 export { ErrorHandlerService } from './services/error-handler.service';
 
+// Schemas
+export { Exam, ExamSchema, Response, ResponseSchema, DeviceInfo, DeviceInfoSchema } from './schemas/exam.schema';
+export { Paper, PaperSchema } from './schemas/paper.schema';
+export { QuestionBank, QuestionBankSchema, Question, QuestionSchema, LocalizedText, LocalizedTextSchema, Option, OptionSchema, QuestionDetail, QuestionDetailSchema } from './schemas/question-bank.schema';
+
 // Module
 export { SharedCommonModule } from './common/shared-common.module';

@@ -2,11 +2,7 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { PapersController } from './papers.controller';
 import { PapersService } from './papers.service';
-import { Paper, PaperSchema } from './schemas/paper.schema';
-import {
-  QuestionBank,
-  QuestionBankSchema,
-} from './schemas/question-bank.schema';
+import { Paper, PaperSchema, QuestionBank, QuestionBankSchema } from '@railji/shared';
 import { SharedCommonModule } from '@railji/shared';
 
 @Module({

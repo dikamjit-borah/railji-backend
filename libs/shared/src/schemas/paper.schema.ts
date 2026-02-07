@@ -12,7 +12,7 @@ export class Paper extends Document {
   @Prop({ required: true })
   paperCode: string;
 
-  @Prop({ required: true, enum: ['general', 'sectional', 'full-paper'] })
+  @Prop({ required: true, enum: ['general', 'sectional', 'full'] })
   paperType: string;
 
   @Prop({ required: true })
@@ -27,10 +27,9 @@ export class Paper extends Document {
   @Prop({ required: true })
   shift: string;
 
-  @Prop({ required: true })
-  zones: string; //17 zones
-  @Prop({ type: [String], required: true })
-  sections: string[];
+  /* @Prop({ required: true })
+  zones: string; //17 zones 
+  */
 
   @Prop({ required: true })
   totalQuestions: number;
