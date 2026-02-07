@@ -47,6 +47,9 @@ export class Paper extends Document {
   @Prop({ default: 0 })
   rating: number;
 
+  @Prop({ default: 0 })
+  usersAttempted: number;
+
   @Prop({ default: false })
   isFree: boolean;
 
