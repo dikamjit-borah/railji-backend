@@ -50,7 +50,7 @@ export class Exam extends Document {
   @Prop({ required: true })
   paperId: string;
 
-  @Prop({ required: true })
+  @Prop()
   paperName: string;
 
   @Prop({ required: true })
