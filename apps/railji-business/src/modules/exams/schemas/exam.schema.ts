@@ -51,6 +51,9 @@ export class Exam extends Document {
   paperId: string;
 
   @Prop({ required: true })
+  paperName: string;
+
+  @Prop({ required: true })
   departmentId: string;
 
   @Prop({ type: [ResponseSchema], default: [] })
