@@ -134,6 +134,7 @@ export class ExamsService {
       const isPassed = score >= passingScore;
 
       // Update exam record
+      exam.paperName = paper.name;
       exam.responses = responses;
       exam.totalQuestions = paper.totalQuestions;
       exam.attemptedQuestions = attemptedQuestions;
