@@ -43,7 +43,7 @@ export class Question {
   id: number;
 
   @Prop({ type: LocalizedTextSchema, required: true })
-  questions: LocalizedText;
+  question: LocalizedText;
 
   @Prop({ type: [OptionSchema], required: true })
   options: Option[];

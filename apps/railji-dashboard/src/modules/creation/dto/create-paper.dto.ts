@@ -5,7 +5,44 @@ import {
   IsArray,
   IsOptional,
   IsBoolean,
+  ValidateNested,
+  ArrayMinSize,
 } from 'class-validator';
+import { Type } from 'class-transformer';
+
+class LocalizedTextDto {
+  @IsString()
+  en: string;
+
+  @IsString()
+  hi: string;
+}
+
+class OptionDto {
+  @IsString()
+  en: string;
+
+  @IsString()
+  hi: string;
+}
+
+class QuestionDto {
+  @IsNumber()
+  id: number;
+
+  @ValidateNested()
+  @Type(() => LocalizedTextDto)
+  question: LocalizedTextDto;
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => OptionDto)
+  @ArrayMinSize(4)
+  options: OptionDto[];
+
+  @IsNumber()
+  correct: number;
+}
 
 export class CreatePaperDto {
   @IsString()
@@ -64,4 +101,9 @@ export class CreatePaperDto {
   @IsOptional()
   @IsBoolean()
   isNew?: boolean;
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => QuestionDto)
+  questions?: QuestionDto[];
 }
