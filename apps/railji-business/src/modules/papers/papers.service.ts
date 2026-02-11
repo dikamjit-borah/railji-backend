@@ -8,7 +8,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Paper } from './schemas/paper.schema';
 import { QuestionBank } from './schemas/question-bank.schema';
-import { CacheService } from '@railji/shared';
+import { CacheService, ErrorHandlerService } from '@railji/shared';
 import { cleanObjectArrays, ensureCleanArray } from '../../utils/utils';
 import { FetchPapersQueryDto } from './dto/paper.dto';
 
@@ -29,6 +29,7 @@ export class PapersService {
     @InjectModel(QuestionBank.name)
     private questionBankModel: Model<QuestionBank>,
     private readonly cacheService: CacheService,
+    private readonly errorHandler: ErrorHandlerService,
   ) {}
 
   private generateCacheKey(departmentId: string, filters?: any): string {
@@ -46,7 +47,7 @@ export class PapersService {
       const papers = await this.paperModel.find(query || {}).exec();
       return papers;
     } catch (error) {
-      throw new BadRequestException('Failed to fetch papers');
+      this.errorHandler.handle(error, { context: 'PapersService.findAll' });
     }
   }
 
@@ -73,11 +74,7 @@ export class PapersService {
 
       return papers;
     } catch (error) {
-      this.logger.error(
-        `Error fetching top papers: ${error.message}`,
-        error.stack,
-      );
-      throw new BadRequestException('Failed to fetch top papers');
+      this.errorHandler.handle(error, { context: 'PapersService.getTopPapers' });
     }
   }
 
@@ -89,8 +86,7 @@ export class PapersService {
       }
       return paper;
     } catch (error) {
-      if (error instanceof NotFoundException) throw error;
-      throw new BadRequestException('Failed to fetch paper');
+      this.errorHandler.handle(error, { context: 'PapersService.findById' });
     }
   }
 
@@ -180,13 +176,7 @@ export class PapersService {
 
       return cleanedPaperCodes;
     } catch (error) {
-      this.logger.error(
-        `Error fetching paper codes by type for department: ${error.message}`,
-        error.stack,
-      );
-      throw new BadRequestException(
-        `Failed to fetch paper codes: ${error.message}`,
-      );
+      this.errorHandler.handle(error, { context: 'PapersService.fetchPaperCodesByType' });
     }
   }
 
@@ -230,11 +220,7 @@ export class PapersService {
         totalPages,
       };
     } catch (error) {
-      this.logger.error(
-        `Error finding papers by department: ${error.message}`,
-        error.stack,
-      );
-      throw new BadRequestException(`Failed to fetch papers: ${error.message}`);
+      this.errorHandler.handle(error, { context: 'PapersService.fetchPapersForDepartment' });
     }
   }
 
@@ -243,16 +229,39 @@ export class PapersService {
     paperId: string,
   ) {
     try {
-      const questions = await this.questionBankModel
-        .find({ departmentId, paperId }, { 'questions.correct': 0 })
+      const result = await this.questionBankModel
+        .aggregate([
+          {
+            $match: { paperId },
+          },
+          {
+            $lookup: {
+              from: 'papers',
+              localField: 'paperId',
+              foreignField: 'paperId',
+              as: 'paperDetails',
+            },
+          },
+          {
+            $unwind: {
+              path: '$paperDetails',
+              preserveNullAndEmptyArrays: true,
+            },
+          },
+          {
+            $project: {
+              'questions.correct': 0,
+            },
+          },
+        ])
         .exec();
-      return questions;
+
+      if (!result || result.length === 0) {
+        throw new NotFoundException(`Questions not found for paper ${paperId}`);
+      }
+      return result[0];
     } catch (error) {
-      this.logger.error(
-        `Error finding papers by exam: ${error.message}`,
-        error.stack,
-      );
-      throw new BadRequestException('Failed to fetch papers');
+      this.errorHandler.handle(error, { context: 'PapersService.fetchQuestionsForDepartmentPaper' });
     }
   }
 
@@ -261,7 +270,7 @@ export class PapersService {
       const answers = await this.questionBankModel
         .aggregate([
           {
-            $match: { departmentId, paperId },
+            $match: { paperId },
           },
           {
             $project: {
@@ -279,13 +288,12 @@ export class PapersService {
           },
         ])
         .exec();
-      return answers;
+      if (!answers || answers.length === 0) {
+        throw new NotFoundException(`Answers not found for paper ${paperId}`);
+      }
+      return answers[0];
     } catch (error) {
-      this.logger.error(
-        `Error finding answers by department and paper: ${error.message}`,
-        error.stack,
-      );
-      throw new BadRequestException('Failed to fetch answers');
+      this.errorHandler.handle(error, { context: 'PapersService.fetchAnswersForDepartmentPaper' });
     }
   }
 
@@ -295,13 +303,12 @@ export class PapersService {
   ): Promise<Paper[]> {
     try {
       const papers = await this.paperModel.find({ paperId, questionId }).exec();
+      if (!papers || papers.length === 0) {
+        throw new NotFoundException(`Question ${questionId} not found for paper ${paperId}`);
+      }
       return papers;
     } catch (error) {
-      this.logger.error(
-        `Error finding papers by exam: ${error.message}`,
-        error.stack,
-      );
-      throw new BadRequestException('Failed to fetch papers');
+      this.errorHandler.handle(error, { context: 'PapersService.fetchQuestionForPaper' });
     }
   }
 }

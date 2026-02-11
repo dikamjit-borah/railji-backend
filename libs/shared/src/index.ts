@@ -24,6 +24,7 @@ export {
   HttpClientInterceptor,
 } from './services/http-client.service';
 export { CacheService } from './services/cache.service';
+export { ErrorHandlerService } from './services/error-handler.service';
 
 // Module
 export { SharedCommonModule } from './common/shared-common.module';
