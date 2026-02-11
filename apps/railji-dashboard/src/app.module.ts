@@ -11,9 +11,14 @@ import {
   HttpExceptionFilter,
 } from '@libs';
 import { config } from './config/config';
+import { CreationModule } from './modules/creation/creation.module';
 
 @Module({
-  imports: [MongooseModule.forRoot(config.database.uri), SharedCommonModule],
+  imports: [
+    MongooseModule.forRoot(config.database.uri),
+    SharedCommonModule,
+    CreationModule,
+  ],
   controllers: [AppController],
   providers: [
     AppService,
