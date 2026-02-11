@@ -7,6 +7,7 @@ import {
   IsBoolean,
   ValidateNested,
   ArrayMinSize,
+  ValidateIf,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -45,13 +46,14 @@ class QuestionDto {
 }
 
 export class CreatePaperDto {
+  @ValidateIf((o) => o.paperType !== 'general')
   @IsString()
-  departmentId: string;
+  departmentId?: string;
 
   @IsString()
   paperCode: string;
 
-  @IsEnum(['general', 'sectional', 'full-paper'])
+  @IsEnum(['general', 'sectional', 'full'])
   paperType: string;
 
   @IsString()
@@ -66,13 +68,6 @@ export class CreatePaperDto {
 
   @IsString()
   shift: string;
-
-  @IsString()
-  zones: string;
-
-  @IsArray()
-  @IsString({ each: true })
-  sections: string[];
 
   @IsNumber()
   totalQuestions: number;
