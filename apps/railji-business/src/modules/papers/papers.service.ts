@@ -6,8 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Paper } from './schemas/paper.schema';
-import { QuestionBank } from './schemas/question-bank.schema';
+import { Paper, QuestionBank } from '@railji/shared';
 import { CacheService, ErrorHandlerService } from '@railji/shared';
 import { cleanObjectArrays, ensureCleanArray } from '../../utils/utils';
 import { FetchPapersQueryDto } from './dto/paper.dto';
@@ -74,7 +73,9 @@ export class PapersService {
 
       return papers;
     } catch (error) {
-      this.errorHandler.handle(error, { context: 'PapersService.getTopPapers' });
+      this.errorHandler.handle(error, {
+        context: 'PapersService.getTopPapers',
+      });
     }
   }
 
@@ -176,7 +177,9 @@ export class PapersService {
 
       return cleanedPaperCodes;
     } catch (error) {
-      this.errorHandler.handle(error, { context: 'PapersService.fetchPaperCodesByType' });
+      this.errorHandler.handle(error, {
+        context: 'PapersService.fetchPaperCodesByType',
+      });
     }
   }
 
@@ -220,7 +223,9 @@ export class PapersService {
         totalPages,
       };
     } catch (error) {
-      this.errorHandler.handle(error, { context: 'PapersService.fetchPapersForDepartment' });
+      this.errorHandler.handle(error, {
+        context: 'PapersService.fetchPapersForDepartment',
+      });
     }
   }
 
@@ -261,7 +266,9 @@ export class PapersService {
       }
       return result[0];
     } catch (error) {
-      this.errorHandler.handle(error, { context: 'PapersService.fetchQuestionsForDepartmentPaper' });
+      this.errorHandler.handle(error, {
+        context: 'PapersService.fetchQuestionsForDepartmentPaper',
+      });
     }
   }
 
@@ -293,7 +300,9 @@ export class PapersService {
       }
       return answers[0];
     } catch (error) {
-      this.errorHandler.handle(error, { context: 'PapersService.fetchAnswersForDepartmentPaper' });
+      this.errorHandler.handle(error, {
+        context: 'PapersService.fetchAnswersForDepartmentPaper',
+      });
     }
   }
 
@@ -304,11 +313,15 @@ export class PapersService {
     try {
       const papers = await this.paperModel.find({ paperId, questionId }).exec();
       if (!papers || papers.length === 0) {
-        throw new NotFoundException(`Question ${questionId} not found for paper ${paperId}`);
+        throw new NotFoundException(
+          `Question ${questionId} not found for paper ${paperId}`,
+        );
       }
       return papers;
     } catch (error) {
-      this.errorHandler.handle(error, { context: 'PapersService.fetchQuestionForPaper' });
+      this.errorHandler.handle(error, {
+        context: 'PapersService.fetchQuestionForPaper',
+      });
     }
   }
 }
