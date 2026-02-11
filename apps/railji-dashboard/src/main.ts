@@ -30,7 +30,7 @@ async function bootstrap() {
   });
 
   // Global prefix
-  app.setGlobalPrefix('api/v1');
+  app.setGlobalPrefix('dashboard/v1');
 
   await app.listen(config.app.port, '0.0.0.0', () => {
     loggerService.log(
