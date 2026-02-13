@@ -61,7 +61,7 @@ export const QuestionSchema = SchemaFactory.createForClass(Question);
 
 @Schema({ collection: 'question-bank', timestamps: true })
 export class QuestionBank extends Document {
-  @Prop({ required: true })
+  @Prop()
   departmentId: string;
 
   @Prop({ required: true })

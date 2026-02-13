@@ -3,7 +3,7 @@ import { Document } from 'mongoose';
 
 @Schema({ collection: 'papers', timestamps: true })
 export class Paper extends Document {
-  @Prop({ required: true })
+  @Prop()
   departmentId: string;
 
   @Prop({ required: true })
