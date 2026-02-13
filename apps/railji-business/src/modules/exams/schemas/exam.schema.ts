@@ -92,8 +92,8 @@ export class Exam extends Document {
   @Prop()
   endTime: Date;
 
-  @Prop({ default: 0 })
-  timeTaken: number; // in minutes
+  @Prop({ type: Object, default: { hours: 0, minutes: 0, seconds: 0 } })
+  timeTaken: { hours: number; minutes: number; seconds: number };
 
   @Prop({
     required: true,

@@ -151,8 +151,20 @@ export class ExamsService {
       exam.status = 'submitted';
       exam.isPassed = isPassed;
       exam.remarks = remarks;
-      exam.timeTaken =
-        (exam.endTime.getTime() - exam.startTime.getTime()) / (1000 * 60); // Time taken in minutes
+      
+      // Calculate time taken in hours, minutes and seconds
+      const timeTakenInSeconds = Math.floor(
+        (exam.endTime.getTime() - exam.startTime.getTime()) / 1000
+      );
+      const hours = Math.floor(timeTakenInSeconds / 3600);
+      const minutes = Math.floor((timeTakenInSeconds % 3600) / 60);
+      const seconds = timeTakenInSeconds % 60;
+      
+      exam.timeTaken = {
+        hours,
+        minutes,
+        seconds,
+      };
 
       await exam.save();
 
