@@ -29,7 +29,7 @@ export class CreationService {
         this.questionBankModel.create({
           departmentId: createPaperDto.departmentId,
           paperId,
-          paperCode: createPaperDto.paperCode,
+          ...(createPaperDto.paperCode && { paperCode: createPaperDto.paperCode }),
           questions,
         }),
       ];

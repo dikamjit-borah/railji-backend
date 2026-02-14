@@ -51,10 +51,10 @@ export class CreatePaperDto {
   @IsOptional()
   departmentId: string;
 
-  @ValidateIf((o) => o.paperType === 'sectional' || o.paperType === 'general')
+  @ValidateIf((o) => o.paperType !== 'full')
   @IsString()
   @IsOptional()
-  paperCode?: string;
+  paperCode: string;
 
   @IsEnum(['general', 'sectional', 'full'])
   paperType: string;
