@@ -50,6 +50,7 @@ export class CreatePaperDto {
   @IsString()
   departmentId?: string;
 
+  @ValidateIf((o) => o.paperType !== 'full')
   @IsString()
   paperCode: string;
 

@@ -9,7 +9,7 @@ export class Paper extends Document {
   @Prop({ required: true })
   paperId: string;
 
-  @Prop({ required: true })
+  @Prop()
   paperCode: string;
 
   @Prop({ required: true, enum: ['general', 'sectional', 'full'] })

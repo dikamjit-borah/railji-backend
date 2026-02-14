@@ -18,6 +18,11 @@ export class LoggingInterceptor implements NestInterceptor {
     const response = context.switchToHttp().getResponse<Response>();
     const { method, url, body, query, params } = request;
 
+    // Skip logging for health check endpoints
+    if (url.includes('/health')) {
+      return next.handle();
+    }
+
     const startTime = Date.now();
 
     return next.handle().pipe(
