@@ -48,11 +48,13 @@ class QuestionDto {
 export class CreatePaperDto {
   @ValidateIf((o) => o.paperType !== 'general')
   @IsString()
-  departmentId?: string;
+  @IsOptional()
+  departmentId: string;
 
-  @ValidateIf((o) => o.paperType !== 'full')
+  @ValidateIf((o) => o.paperType === 'sectional' || o.paperType === 'general')
   @IsString()
-  paperCode: string;
+  @IsOptional()
+  paperCode?: string;
 
   @IsEnum(['general', 'sectional', 'full'])
   paperType: string;
