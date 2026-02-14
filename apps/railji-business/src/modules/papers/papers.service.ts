@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  Logger,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Paper, QuestionBank } from '@railji/shared';
@@ -207,9 +202,31 @@ export class PapersService {
       // Get cached paper codes by type
       const paperCodes = await this.fetchPaperCodesByType(departmentId);
 
+      // Build sort options
+      const sortOptions: any = {};
+      if (query.sortBy) {
+        const sortOrder = query.sortOrder === 'desc' ? -1 : 1;
+        switch (query.sortBy) {
+          case 'name':
+            sortOptions.title = sortOrder;
+            break;
+          case 'rating':
+            sortOptions.rating = sortOrder;
+            break;
+          case 'updatedAt':
+            sortOptions.updatedAt = sortOrder;
+            break;
+        }
+      }
+
       // Fetch paginated papers and total count
       const [papers, total] = await Promise.all([
-        this.paperModel.find(searchQuery).skip(skip).limit(limit).exec(),
+        this.paperModel
+          .find(searchQuery)
+          .sort(sortOptions)
+          .skip(skip)
+          .limit(limit)
+          .exec(),
         this.paperModel.countDocuments(searchQuery).exec(),
       ]);
 

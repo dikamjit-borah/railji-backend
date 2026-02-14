@@ -1,4 +1,10 @@
-import { IsString, IsOptional, IsMongoId, IsNumber, Min } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsMongoId,
+  IsNumber,
+  Min,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreatePaperDto {
@@ -79,4 +85,12 @@ export class FetchPapersQueryDto {
   @IsNumber()
   @IsOptional()
   year?: number;
+
+  @IsString()
+  @IsOptional()
+  sortBy?: 'name' | 'rating' | 'updatedAt';
+
+  @IsString()
+  @IsOptional()
+  sortOrder?: 'asc' | 'desc';
 }

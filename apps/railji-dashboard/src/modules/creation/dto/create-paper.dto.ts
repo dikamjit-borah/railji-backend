@@ -12,18 +12,18 @@ import {
 import { Type } from 'class-transformer';
 
 class LocalizedTextDto {
-  @IsString()
+  @IsOptional()
   en: string;
 
-  @IsString()
+  @IsOptional()
   hi: string;
 }
 
 class OptionDto {
-  @IsString()
+  @IsOptional()
   en: string;
 
-  @IsString()
+  @IsOptional()
   hi: string;
 }
 

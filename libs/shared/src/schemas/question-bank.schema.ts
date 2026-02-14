@@ -5,10 +5,10 @@ import { Document } from 'mongoose';
 
 @Schema({ _id: false })
 export class LocalizedText {
-  @Prop({ required: true })
+  @Prop()
   en: string;
 
-  @Prop({ required: true })
+  @Prop()
   hi: string;
 }
 
@@ -16,10 +16,10 @@ export const LocalizedTextSchema = SchemaFactory.createForClass(LocalizedText);
 
 @Schema({ _id: false })
 export class Option {
-  @Prop({ required: true })
+  @Prop()
   en: string;
 
-  @Prop({ required: true })
+  @Prop()
   hi: string;
 }
 
@@ -27,10 +27,10 @@ export const OptionSchema = SchemaFactory.createForClass(Option);
 
 @Schema({ _id: false })
 export class QuestionDetail {
-  @Prop({ required: true })
+  @Prop()
   en: string;
 
-  @Prop({ required: true })
+  @Prop()
   hi: string;
 }
 
