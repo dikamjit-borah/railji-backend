@@ -11,13 +11,13 @@ import {
   HttpExceptionFilter,
 } from '@libs';
 import { config } from './config/config';
-import { CreationModule } from './modules/creation/creation.module';
+import { PapersModule } from './modules/papers/papers.module';
 
 @Module({
   imports: [
     MongooseModule.forRoot(config.database.uri),
     SharedCommonModule,
-    CreationModule,
+    PapersModule,
   ],
   controllers: [AppController],
   providers: [
