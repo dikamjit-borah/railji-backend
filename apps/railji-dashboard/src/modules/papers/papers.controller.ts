@@ -26,7 +26,7 @@ export class PapersController {
     };
   }
 
-  @Patch('update/:paperId')
+  @Patch(':paperId')
   @HttpCode(HttpStatus.OK)
   async update(
     @Param('paperId') paperId: string,
