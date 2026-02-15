@@ -53,27 +53,18 @@ export class PapersService {
     try {
       const { questions, ...paperData } = updatePaperDto;
 
-      const promises = [];
+      // Always make exactly 2 parallel calls - one for paper, one for questions
+      await Promise.all([
+        Object.keys(paperData).length > 0
+          ? this.paperModel.findOneAndUpdate({ paperId }, paperData).exec()
+          : Promise.resolve(),
+        questions
+          ? this.questionBankModel
+              .findOneAndUpdate({ paperId }, { questions })
+              .exec()
+          : Promise.resolve(),
+      ]);
 
-      // Update paper metadata if provided
-      if (Object.keys(paperData).length > 0) {
-        promises.push(
-          this.paperModel
-            .findOneAndUpdate({ paperId }, paperData, { new: true })
-            .exec(),
-        );
-      }
-
-      // Update questions if provided
-      if (questions) {
-        promises.push(
-          this.questionBankModel
-            .findOneAndUpdate({ paperId }, { questions }, { new: true })
-            .exec(),
-        );
-      }
-
-      await Promise.all(promises);
       this.logger.log(`${paperId} updated successfully`);
       return { paperId };
     } catch (error) {
