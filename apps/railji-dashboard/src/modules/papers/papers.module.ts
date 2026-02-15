@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { CreationController } from './creation.controller';
-import { CreationService } from './creation.service';
+import { PapersController } from './papers.controller';
+import { PapersService } from './papers.service';
 import {
   Paper,
   PaperSchema,
@@ -18,8 +18,8 @@ import { SharedCommonModule } from '@railji/shared';
     ]),
     SharedCommonModule,
   ],
-  controllers: [CreationController],
-  providers: [CreationService],
-  exports: [CreationService],
+  controllers: [PapersController],
+  providers: [PapersService],
+  exports: [PapersService],
 })
-export class CreationModule {}
+export class PapersModule {}
