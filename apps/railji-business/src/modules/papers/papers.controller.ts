@@ -47,6 +47,8 @@ export class PapersController {
     if (queryDto.paperCode) searchQuery.paperCode = queryDto.paperCode;
     if (queryDto.paperType) searchQuery.paperType = queryDto.paperType;
     if (queryDto.year) searchQuery.year = queryDto.year;
+    if (queryDto.sortBy) searchQuery.sortBy = queryDto.sortBy;
+    if (queryDto.sortOrder) searchQuery.sortOrder = queryDto.sortOrder;
 
     const result = await this.papersService.fetchPapersForDepartment(
       departmentId,

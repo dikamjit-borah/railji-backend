@@ -194,9 +194,10 @@ export class PapersService {
       const skip = (page - 1) * limit;
 
       // Build the query with departmentId and any additional filters
+      const { page: _, limit: __, sortBy, sortOrder, ...filterQuery } = query;
       const searchQuery = {
         ...(query.paperType !== 'general' && { departmentId }),
-        ...query,
+        ...filterQuery,
       };
 
       // Get cached paper codes by type
@@ -204,17 +205,17 @@ export class PapersService {
 
       // Build sort options
       const sortOptions: any = {};
-      if (query.sortBy) {
-        const sortOrder = query.sortOrder === 'desc' ? -1 : 1;
-        switch (query.sortBy) {
+      if (sortBy) {
+        const sortOrderValue = sortOrder === 'desc' ? -1 : 1;
+        switch (sortBy) {
           case 'name':
-            sortOptions.name = sortOrder;
+            sortOptions.name = sortOrderValue;
             break;
           case 'rating':
-            sortOptions.rating = sortOrder;
+            sortOptions.rating = sortOrderValue;
             break;
           case 'updatedAt':
-            sortOptions.updatedAt = sortOrder;
+            sortOptions.updatedAt = sortOrderValue;
             break;
         }
       } else {
@@ -226,6 +227,7 @@ export class PapersService {
       const [papers, total] = await Promise.all([
         this.paperModel
           .find(searchQuery)
+          .collation({ locale: 'en', strength: 2 }) // Case-insensitive sorting
           .sort(sortOptions)
           .skip(skip)
           .limit(limit)
