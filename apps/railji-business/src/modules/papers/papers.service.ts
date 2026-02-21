@@ -208,7 +208,7 @@ export class PapersService {
         const sortOrder = query.sortOrder === 'desc' ? -1 : 1;
         switch (query.sortBy) {
           case 'name':
-            sortOptions.title = sortOrder;
+            sortOptions.name = sortOrder;
             break;
           case 'rating':
             sortOptions.rating = sortOrder;
@@ -217,6 +217,9 @@ export class PapersService {
             sortOptions.updatedAt = sortOrder;
             break;
         }
+      } else {
+        // Default sort by updatedAt descending for consistent ordering
+        sortOptions.updatedAt = -1;
       }
 
       // Fetch paginated papers and total count
