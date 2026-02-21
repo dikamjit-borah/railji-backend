@@ -38,7 +38,7 @@ export class Paper extends Document {
   duration: number;
 
   @Prop({ required: true })
-  passMarks: number;
+  passPercentage: number;
 
   @Prop({ required: true })
   negativeMarking: number;
