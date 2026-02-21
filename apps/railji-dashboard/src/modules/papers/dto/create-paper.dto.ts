@@ -79,7 +79,7 @@ export class CreatePaperDto {
   duration: number;
 
   @IsNumber()
-  passMarks: number;
+  passPercentage: number;
 
   @IsNumber()
   negativeMarking: number;

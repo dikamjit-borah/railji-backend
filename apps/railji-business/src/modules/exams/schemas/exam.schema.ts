@@ -109,7 +109,7 @@ export class Exam extends Document {
   isPassed: boolean;
 
   @Prop({ default: 0 })
-  passingScore: number;
+  passPercentage: number;
 
   @Prop({ type: DeviceInfoSchema, required: true })
   deviceInfo: DeviceInfo;

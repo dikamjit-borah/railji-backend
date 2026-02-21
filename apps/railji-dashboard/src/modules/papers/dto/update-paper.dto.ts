@@ -86,7 +86,7 @@ export class UpdatePaperDto {
 
   @IsOptional()
   @IsNumber()
-  passMarks?: number;
+  passPercentage?: number;
 
   @IsOptional()
   @IsNumber()

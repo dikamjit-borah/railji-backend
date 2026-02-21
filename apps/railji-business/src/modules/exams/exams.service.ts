@@ -88,7 +88,7 @@ export class ExamsService {
 
       // Extract scoring parameters from paper schema
       const maxScore = paper.totalQuestions; // Assuming 1 mark per question
-      const passingScore = paper.passMarks;
+      const passPercentage = paper.passPercentage;
       const negativeMarkingPenalty = paper.negativeMarking; // Penalty per wrong answer
 
       // Fetch correct answers from papers service
@@ -132,7 +132,7 @@ export class ExamsService {
         attemptedQuestions > 0
           ? (correctAnswers / attemptedQuestions) * 100
           : 0;
-      const isPassed = score >= passingScore;
+      const isPassed = percentage >= passPercentage;
 
       // Update exam record
       exam.paperName = paper.name;
@@ -144,7 +144,7 @@ export class ExamsService {
       exam.incorrectAnswers = incorrectAnswers;
       exam.score = score;
       exam.maxScore = maxScore;
-      exam.passingScore = passingScore;
+      exam.passPercentage = passPercentage;
       exam.percentage = percentage;
       exam.accuracy = accuracy;
       exam.endTime = new Date();
@@ -176,7 +176,7 @@ export class ExamsService {
         examId,
         score,
         maxScore,
-        passingScore,
+        passPercentage,
         percentage: percentage.toFixed(2),
         accuracy: accuracy.toFixed(2),
         isPassed,
