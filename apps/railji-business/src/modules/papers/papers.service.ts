@@ -210,9 +210,11 @@ export class PapersService {
         switch (sortBy) {
           case 'name':
             sortOptions.name = sortOrderValue;
+            sortOptions.createdAt = sortOrderValue; // Secondary sort for same names
             break;
           case 'rating':
             sortOptions.rating = sortOrderValue;
+            sortOptions.createdAt = -1; // Secondary sort by newest
             break;
           case 'updatedAt':
             sortOptions.updatedAt = sortOrderValue;
