@@ -37,7 +37,10 @@ async function bootstrap() {
       `Railji Business running on http://localhost:${config.app.port}`,
       'Bootstrap',
     );
-    loggerService.log(`Environment: ${config.app.env}`, 'Bootstrap');
+    loggerService.log(
+      `Configuration: ${JSON.stringify(config, null, 2)}`,
+      'Bootstrap',
+    );
   });
 }
 

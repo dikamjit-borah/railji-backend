@@ -1,19 +1,19 @@
 import * as dotenv from 'dotenv';
 import { join } from 'path';
 
-dotenv.config({ path: join(__dirname, '..', '..', '..', '.env') });
+dotenv.config({ path: join(__dirname, '..', '..', '.env') });
 
 export const config = {
   app: {
     name: process.env.APP_NAME || 'railji-business',
-    port: parseInt(process.env.BUSINESS_PORT || '3001', 10),
+    port: parseInt(process.env.PORT || '3001', 10),
     env: process.env.NODE_ENV || 'development',
   },
   database: {
-    uri: process.env.MONGODB_URI || 'mongodb://localhost:27017/railji',
+    uri: process.env.MONGODB_URI,
   },
   jwt: {
-    secret: process.env.JWT_SECRET || 'your-secret-key-change-in-production',
+    secret: process.env.JWT_SECRET,
     expiresIn: process.env.JWT_EXPIRATION || '7d',
   },
   logging: {
