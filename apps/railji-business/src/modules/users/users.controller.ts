@@ -1,0 +1,48 @@
+import { Controller, Get, Post, Body, Param, HttpStatus, HttpCode } from '@nestjs/common';
+import { UsersService } from './users.service';
+import { CreateUserDto } from './dto/create-user.dto';
+
+@Controller('users')
+export class UsersController {
+  constructor(private readonly usersService: UsersService) {}
+
+  @Post()
+  @HttpCode(HttpStatus.CREATED)
+  async createUser(@Body() createUserDto: CreateUserDto) {
+    const user = await this.usersService.createUser(createUserDto);
+    return {
+      message: 'User created successfully',
+      data: user,
+    };
+  }
+
+  @Get()
+  @HttpCode(HttpStatus.OK)
+  async findAllUsers() {
+    const users = await this.usersService.findAllUsers();
+    return {
+      message: 'Users retrieved successfully',
+      data: users,
+    };
+  }
+
+  @Get(':userId')
+  @HttpCode(HttpStatus.OK)
+  async findUserById(@Param('userId') userId: string) {
+    const user = await this.usersService.findUserById(userId);
+    return {
+      message: 'User retrieved successfully',
+      data: user,
+    };
+  }
+
+  @Get('supabase/:supabaseId')
+  @HttpCode(HttpStatus.OK)
+  async findUserBySupabaseId(@Param('supabaseId') supabaseId: string) {
+    const user = await this.usersService.findUserBySupabaseId(supabaseId);
+    return {
+      message: 'User retrieved successfully',
+      data: user,
+    };
+  }
+}
