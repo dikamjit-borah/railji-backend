@@ -27,6 +27,14 @@ class OptionDto {
   hi: string;
 }
 
+class QuestionDetailDto {
+  @IsOptional()
+  en: string;
+
+  @IsOptional()
+  hi: string;
+}
+
 class QuestionDto {
   @IsNumber()
   id: number;
@@ -43,6 +51,12 @@ class QuestionDto {
 
   @IsNumber()
   correct: number;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => QuestionDetailDto)
+  details?: QuestionDetailDto[];
 }
 
 export class UpdatePaperDto {
