@@ -55,6 +55,9 @@ export class Paper extends Document {
   @Prop({ default: true })
   isNew: boolean;
 
+  @Prop({ type: Object, default: {} })
+  metadata?: Record<string, any>;
+
   @Prop({ default: Date.now })
   createdAt: Date;
 
