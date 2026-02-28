@@ -118,4 +118,8 @@ export class CreatePaperDto {
   @ValidateNested({ each: true })
   @Type(() => QuestionDto)
   questions?: QuestionDto[];
+
+  @IsOptional()
+  @Type(() => Object)
+  metadata?: { filename?: string };
 }
