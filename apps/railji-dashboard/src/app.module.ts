@@ -12,11 +12,13 @@ import {
 } from '@libs';
 import { config } from './config/config';
 import { PapersModule } from './modules/papers/papers.module';
+import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
   imports: [
     MongooseModule.forRoot(config.database.uri),
     SharedCommonModule,
+    AuthModule,
     PapersModule,
   ],
   controllers: [AppController],
