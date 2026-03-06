@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
+import { EXAM_SUBMISSION_STATUS } from '../../../constants/app.constants';
 
 /* ---------- Sub Schemas ---------- */
 
@@ -97,8 +98,8 @@ export class Exam extends Document {
 
   @Prop({
     required: true,
-    enum: ['in-progress', 'submitted', 'abandoned', 'timeout'],
-    default: 'in-progress',
+    enum: Object.values(EXAM_SUBMISSION_STATUS),
+    default: EXAM_SUBMISSION_STATUS.IN_PROGRESS,
   })
   status: string;
 
