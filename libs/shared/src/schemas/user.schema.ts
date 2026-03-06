@@ -3,13 +3,13 @@ import { Document } from 'mongoose';
 
 @Schema({ collection: 'users', timestamps: true })
 export class User extends Document {
-  @Prop({ required: true, unique: true })
+  @Prop({ unique: true })
   username: string;
 
-  @Prop({ required: true })
+  @Prop({})
   password: string;
 
-  @Prop({ required: true, enum: ['admin', 'user'] })
+  @Prop({ enum: ['admin', 'user'] })
   userType: string;
 
   @Prop({ unique: true, sparse: true })
