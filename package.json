@@ -34,7 +34,7 @@
     "format:dashboard": "cd apps/railji-dashboard && npm run format"
   },
   "dependencies": {
-    "@nestjs/common": "^10.2.10",
+    "@nestjs/common": "^11.1.15",
     "@nestjs/core": "^11.1.15",
     "@nestjs/jwt": "^11.0.0",
     "@nestjs/mongoose": "^11.0.4",
