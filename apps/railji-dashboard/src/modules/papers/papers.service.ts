@@ -44,7 +44,7 @@ export class PapersService {
       ];
       await Promise.all(promises);
 
-      this.logAction(username, 'create', paperId);
+      this.logPaperOperation(username, 'create', paperId);
       this.logger.log(`${paperId} created successfully`);
       return { paperId };
     } catch (error) {
@@ -81,7 +81,7 @@ export class PapersService {
           : Promise.resolve(),
       ]);
 
-      this.logAction(username, 'update', paperId);
+      this.logPaperOperation(username, 'update', paperId);
       this.logger.log(`${paperId} updated successfully`);
       return { paperId };
     } catch (error) {
@@ -99,7 +99,7 @@ export class PapersService {
       ];
 
       await Promise.all(promises);
-      this.logAction(username, 'delete', paperId);
+      this.logPaperOperation(username, 'delete', paperId);
       this.logger.log(`${paperId} deleted successfully`);
     } catch (error) {
       this.errorHandler.handle(error, {
@@ -108,7 +108,7 @@ export class PapersService {
     }
   }
 
-  async logAction(
+  async logPaperOperation(
     username: string,
     action: 'create' | 'update' | 'delete',
     paperId: string,
@@ -126,6 +126,20 @@ export class PapersService {
       this.logger.log(`Audit log created: ${message}`);
     } catch (error) {
       this.logger.error(`Failed to create audit log: ${error.message}`);
+    }
+  }
+
+  async getPaperLogs(): Promise<any> {
+    try {
+      const logs = await this.auditLogModel
+        .find()
+        .sort({ createdAt: -1 })
+        .exec();
+      return logs;
+    } catch (error) {
+      this.errorHandler.handle(error, {
+        context: 'PapersService.getPaperLogs',
+      });
     }
   }
 }

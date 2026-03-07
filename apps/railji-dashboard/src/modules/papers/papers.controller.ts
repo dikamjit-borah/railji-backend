@@ -7,6 +7,7 @@ import {
   Param,
   HttpStatus,
   HttpCode,
+  Get,
 } from '@nestjs/common';
 import { PapersService } from './papers.service';
 import { CreatePaperDto } from './dto/create-paper.dto';
@@ -51,6 +52,16 @@ export class PapersController {
     await this.papersService.deletePaper(paperId, username);
     return {
       message: 'Paper deleted successfully',
+    };
+  }
+
+  @Get('logs')
+  @HttpCode(HttpStatus.OK)
+  async getPaperLogs() {
+    const result = await this.papersService.getPaperLogs();
+    return {
+      message: 'Paper logs retrieved successfully',
+      data: result,
     };
   }
 }
