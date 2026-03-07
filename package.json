@@ -10,6 +10,7 @@
     "libs/shared"
   ],
   "scripts": {
+    "install:all": "npm install && npm install --workspace=libs/shared && npm install --workspace=apps/railji-business && npm install --workspace=apps/railji-dashboard",
     "build:shared": "cd libs/shared && npm run build",
     "build:business": "cd apps/railji-business && npm run build",
     "build:dashboard": "cd apps/railji-dashboard && npm run build",
@@ -18,8 +19,8 @@
     "dev:dashboard": "cd apps/railji-dashboard && npm run start:dev",
     "stage:business": "npm run build:shared && npm run build:business && cd apps/railji-business && npm run start:prod",
     "stage:dashboard": "npm run build:shared && npm run build:dashboard && cd apps/railji-dashboard && npm run start:prod",
-    "start:business": "npm install && cd libs/shared && npm install && cd ../.. && cd apps/railji-business && npm install && cd ../.. && npm run build:shared && npm run build:business && cd apps/railji-business && npm run start:prod",
-    "start:dashboard": "npm install && cd libs/shared && npm install && cd ../.. && cd apps/railji-dashboard && npm install && cd ../.. && npm run build:shared && npm run build:dashboard && cd apps/railji-dashboard && npm run start:prod",
+    "start:business": "npm run install:all && npm run build:shared && npm run build:business && cd apps/railji-business && npm run start:prod",
+    "start:dashboard": "npm run install:all && npm run build:shared && npm run build:dashboard && cd apps/railji-dashboard && npm run start:prod",
     "prod:business": "cd apps/railji-business && npm run start:prod",
     "prod:dashboard": "cd apps/railji-dashboard && npm run start:prod",
     "lint": "npm run lint:business && npm run lint:dashboard",
@@ -49,13 +50,11 @@
     "passport-jwt": "^4.0.1",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^5.0.5",
-    "rxjs": "^7.8.1",
-    "winston": "^3.11.0",
-    "winston-daily-rotate-file": "^4.7.1"
+    "rxjs": "^7.8.1"
   },
   "devDependencies": {
-    "@nestjs/cli": "^7.6.0",
-    "@nestjs/schematics": "^7.3.1",
+    "@nestjs/cli": "^11.0.14",
+    "@nestjs/schematics": "^10.0.2",
     "@nestjs/testing": "^11.1.15",
     "@types/bcrypt": "^5.0.2",
     "@types/express": "^4.17.17",
