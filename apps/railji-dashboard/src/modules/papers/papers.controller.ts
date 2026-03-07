@@ -44,8 +44,11 @@ export class PapersController {
 
   @Delete(':paperId')
   @HttpCode(HttpStatus.OK)
-  async remove(@Param('paperId') paperId: string) {
-    await this.papersService.deletePaper(paperId);
+  async remove(
+    @Param('paperId') paperId: string,
+    @Body('username') username?: string,
+  ) {
+    await this.papersService.deletePaper(paperId, username);
     return {
       message: 'Paper deleted successfully',
     };

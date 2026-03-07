@@ -9,12 +9,14 @@ import {
   QuestionBankSchema,
 } from '@railji/shared';
 import { SharedCommonModule } from '@railji/shared';
+import { AuditLog, AuditLogSchema } from './schemas/audit-log.schema';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: Paper.name, schema: PaperSchema },
       { name: QuestionBank.name, schema: QuestionBankSchema },
+      { name: AuditLog.name, schema: AuditLogSchema },
     ]),
     SharedCommonModule,
   ],

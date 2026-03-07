@@ -6,6 +6,7 @@ import { Paper, QuestionBank } from '@railji/shared';
 import { CreatePaperDto } from './dto/create-paper.dto';
 import { UpdatePaperDto } from './dto/update-paper.dto';
 import { ErrorHandlerService } from '@railji/shared';
+import { AuditLog } from './schemas/audit-log.schema';
 
 @Injectable()
 export class PapersService {
@@ -15,6 +16,7 @@ export class PapersService {
     @InjectModel(Paper.name) private paperModel: Model<Paper>,
     @InjectModel(QuestionBank.name)
     private questionBankModel: Model<QuestionBank>,
+    @InjectModel(AuditLog.name) private auditLogModel: Model<AuditLog>,
     private errorHandler: ErrorHandlerService,
   ) {}
 
@@ -26,8 +28,8 @@ export class PapersService {
       const { questions, username, ...paperData } = createPaperDto;
 
       const promises = [
-        this.paperModel.create({ 
-          paperId, 
+        this.paperModel.create({
+          paperId,
           ...paperData,
           ...(username && { createdBy: username }),
         }),
@@ -41,6 +43,8 @@ export class PapersService {
         }),
       ];
       await Promise.all(promises);
+
+      this.logAction(username, 'create', paperId);
       this.logger.log(`${paperId} created successfully`);
       return { paperId };
     } catch (error) {
@@ -66,7 +70,9 @@ export class PapersService {
       // Always make exactly 2 parallel calls - one for paper, one for questions
       await Promise.all([
         Object.keys(paperUpdateData).length > 0
-          ? this.paperModel.findOneAndUpdate({ paperId }, paperUpdateData).exec()
+          ? this.paperModel
+              .findOneAndUpdate({ paperId }, paperUpdateData)
+              .exec()
           : Promise.resolve(),
         questions
           ? this.questionBankModel
@@ -75,6 +81,7 @@ export class PapersService {
           : Promise.resolve(),
       ]);
 
+      this.logAction(username, 'update', paperId);
       this.logger.log(`${paperId} updated successfully`);
       return { paperId };
     } catch (error) {
@@ -84,7 +91,7 @@ export class PapersService {
     }
   }
 
-  async deletePaper(paperId: string): Promise<void> {
+  async deletePaper(paperId: string, username?: string): Promise<void> {
     try {
       const promises = [
         this.paperModel.deleteOne({ paperId }).exec(),
@@ -92,11 +99,33 @@ export class PapersService {
       ];
 
       await Promise.all(promises);
+      this.logAction(username, 'delete', paperId);
       this.logger.log(`${paperId} deleted successfully`);
     } catch (error) {
       this.errorHandler.handle(error, {
         context: 'PapersService.deletePaper',
       });
+    }
+  }
+
+  async logAction(
+    username: string,
+    action: 'create' | 'update' | 'delete',
+    paperId: string,
+  ): Promise<void> {
+    try {
+      const message = `${username} has ${action}d ${paperId}`;
+
+      await this.auditLogModel.create({
+        username,
+        action,
+        paperId,
+        message,
+      });
+
+      this.logger.log(`Audit log created: ${message}`);
+    } catch (error) {
+      this.logger.error(`Failed to create audit log: ${error.message}`);
     }
   }
 }

@@ -1,0 +1,25 @@
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document } from 'mongoose';
+
+@Schema({ collection: 'audit-logs', timestamps: true })
+export class AuditLog extends Document {
+  @Prop({ required: true })
+  username: string;
+
+  @Prop({ required: true, enum: ['create', 'update', 'delete'] })
+  action: string;
+
+  @Prop({ required: true })
+  paperId: string;
+
+  @Prop({ required: true })
+  message: string;
+
+  @Prop({ default: Date.now })
+  createdAt: Date;
+
+  @Prop({ default: Date.now })
+  updatedAt: Date;
+}
+
+export const AuditLogSchema = SchemaFactory.createForClass(AuditLog);
