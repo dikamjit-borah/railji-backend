@@ -245,9 +245,7 @@ export class ExamsService {
         .exec();
 
       if (!exams || exams.length === 0) {
-        throw new NotFoundException(
-          `No exams found for user ${userId} in the specified date range`,
-        );
+        throw new NotFoundException(`No exams found for user ${userId}`);
       }
 
       const departmentstats = this.departmentStats(exams);
@@ -377,6 +375,11 @@ export class ExamsService {
           .exec(),
         this.examModel.countDocuments(filter).exec(),
       ]);
+
+      if (!exams || exams.length === 0) {
+        throw new NotFoundException(`No exams found for user ${userId}`);
+      }
+
       const totalPages = Math.ceil(total / limit);
       return {
         exams,
