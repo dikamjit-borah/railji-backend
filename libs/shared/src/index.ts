@@ -42,5 +42,14 @@ export {
   QuestionDetailSchema,
 } from './schemas/question-bank.schema';
 
+// Utils
+export {
+  buildDateFilter,
+  getCurrentMonthRange,
+  getLastMonthsRange,
+  DateRange,
+} from './utils/date.utils';
+
 // Module
 export { SharedCommonModule } from './common/shared-common.module';
+

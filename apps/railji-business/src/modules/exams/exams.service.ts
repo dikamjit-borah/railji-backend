@@ -16,7 +16,7 @@ import {
   GetExamStatsDto,
 } from './dto/exam.dto';
 import { PapersService } from '../papers/papers.service';
-import { ErrorHandlerService } from '@railji/shared';
+import { ErrorHandlerService, buildDateFilter } from '@railji/shared';
 import { EXAM_STATUS } from '../../constants/app.constants';
 import { ExamStats } from './interfaces/exam.interface';
 
@@ -224,13 +224,10 @@ export class ExamsService {
     query?: GetExamStatsDto,
   ): Promise<any> {
     try {
-      const { startDate, endDate } = this.getDateRange(query);
+      const dateFilter = buildDateFilter(query.startDate, query.endDate);
       const filter: Record<string, any> = {
         userId,
-        createdAt: {
-          $gte: startDate,
-          $lte: endDate,
-        },
+        ...dateFilter,
       };
 
       /* if (query.departmentId) {
@@ -252,10 +249,6 @@ export class ExamsService {
       return {
         totalExams: exams.length,
         totalDepartments: departmentstats.length,
-        dateRange: {
-          startDate: startDate.toISOString(),
-          endDate: endDate.toISOString(),
-        },
         departments: departmentstats,
       };
     } catch (error) {
@@ -263,36 +256,6 @@ export class ExamsService {
         context: 'ExamsService.fetchExamsByUserId',
       });
     }
-  }
-
-  private getDateRange(query?: GetExamHistoryDto) {
-    const now = new Date();
-    const defaultStartDate = new Date(now.getFullYear(), now.getMonth(), 1);
-    const defaultEndDate = new Date(
-      now.getFullYear(),
-      now.getMonth() + 1,
-      0,
-      23,
-      59,
-      59,
-      999,
-    );
-
-    const startDate = query?.startDate
-      ? new Date(query.startDate)
-      : defaultStartDate;
-    const endDate = query?.endDate ? new Date(query.endDate) : defaultEndDate;
-
-    // Set end date to end of day if time is not specified
-    if (
-      query?.endDate &&
-      endDate.getHours() === 0 &&
-      endDate.getMinutes() === 0
-    ) {
-      endDate.setHours(23, 59, 59, 999);
-    }
-
-    return { startDate, endDate };
   }
 
   private departmentStats(exams: Exam[]): ExamStats[] {
@@ -352,13 +315,10 @@ export class ExamsService {
     query: GetExamHistoryDto = {},
   ): Promise<any> {
     try {
-      const { startDate, endDate } = this.getDateRange(query);
+      const dateFilter = buildDateFilter(query.startDate, query.endDate);
       const filter: Record<string, any> = {
         userId,
-        createdAt: {
-          $gte: startDate,
-          $lte: endDate,
-        },
+        ...dateFilter,
       };
 
       //Todo: Add filters if needed
@@ -386,6 +346,7 @@ export class ExamsService {
         total,
         page,
         totalPages,
+        filter
       };
     } catch (error) {
       this.errorHandler.handle(error, {
