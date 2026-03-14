@@ -21,11 +21,9 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
-    "lodash": "^4.17.23",
     "uuid": "^9.0.0"
   },
   "devDependencies": {
-    "@types/lodash": "^4.17.24",
     "@types/uuid": "^9.0.0"
   }
 }
