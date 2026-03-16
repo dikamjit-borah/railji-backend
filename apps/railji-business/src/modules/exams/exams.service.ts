@@ -269,7 +269,7 @@ export class ExamsService {
 
   private paperCodeStats(exams: Exam[]): ExamStats[] {
     return map(groupBy(exams, 'paperCode'), (paperExams, paperCode) => ({
-      paperCode,
+      paperCode: paperCode === 'undefined' ? 'NA' : paperCode,
       ...this.calculateStats(paperExams),
     }));
   }
