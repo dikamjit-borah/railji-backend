@@ -176,13 +176,8 @@ export class ExamsService {
         seconds,
       };
 
-      await exam.save();
-
-      this.logger.log(
-        `Exam submitted successfully. Score: ${score}/${maxScore} (${percentage.toFixed(2)}%)`,
-      );
-
-      return {
+      // Prepare response data
+      const responseData = {
         examId,
         score,
         maxScore,
@@ -198,6 +193,23 @@ export class ExamsService {
         negativeMarking: negativeMarkingPenalty,
         submittedAt: exam.endTime,
       };
+
+      // Handle exam mode logic
+      if (exam.examMode === 'live') {
+        // Save exam data for live exams
+        await exam.save();
+        this.logger.log(
+          `Live exam submitted successfully. Score: ${score}/${maxScore} (${percentage.toFixed(2)}%)`,
+        );
+      } else if (exam.examMode === 'mock') {
+        // Delete exam document for mock exams after preparing response
+        await this.examModel.deleteOne({ examId, userId }).exec();
+        this.logger.log(
+          `Mock exam submitted and deleted successfully. Score: ${score}/${maxScore} (${percentage.toFixed(2)}%)`,
+        );
+      }
+
+      return responseData;
     } catch (error) {
       this.errorHandler.handle(error, { context: 'ExamsService.submitExam' });
     }

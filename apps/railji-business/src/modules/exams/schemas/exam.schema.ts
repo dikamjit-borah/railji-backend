@@ -50,6 +50,9 @@ export class Exam extends Document {
 
   @Prop({ required: true })
   paperId: string;
+  
+  @Prop({ required: true, enum: ['mock', 'live'] })
+  examMode: string;
 
   @Prop()
   paperName: string;

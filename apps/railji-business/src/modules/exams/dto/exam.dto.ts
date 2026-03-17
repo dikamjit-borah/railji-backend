@@ -7,6 +7,7 @@ import {
   ValidateNested,
   IsNotEmpty,
   Min,
+  IsIn,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -93,6 +94,11 @@ export class StartExamDto {
   @IsString()
   @IsNotEmpty()
   departmentId: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @IsIn(['mock', 'live'], { message: 'examMode must be either mock or live' })
+  examMode: string
 }
 
 export class GetExamStatsDto {
