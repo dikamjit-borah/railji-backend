@@ -4,6 +4,9 @@ import { Document } from 'mongoose';
 @Schema({ collection: 'plans', timestamps: true })
 export class Plan extends Document {
   @Prop({ required: true })
+  planId: string;
+
+  @Prop({ required: true })
   departmentId: string;
 
   @Prop({ required: true })

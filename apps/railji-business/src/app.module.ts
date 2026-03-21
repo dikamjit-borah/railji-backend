@@ -6,13 +6,12 @@ import { ExamsModule } from './modules/exams/exams.module';
 import { PapersModule } from './modules/papers/papers.module';
 import { DepartmentsModule } from './modules/departments/departments.module';
 import { UsersModule } from './modules/users/users.module';
+import { SubscriptionsModule } from './modules/subscriptions/subscriptions.module';
 import {
   SharedCommonModule,
   LoggingInterceptor,
   ResponseInterceptor,
   ErrorInterceptor,
-  HttpExceptionFilter,
-  LoggerServiceProvider,
 } from '@libs';
 import { config } from './config/config';
 import { AppController } from './app.controller';
@@ -27,6 +26,7 @@ import { AppService } from './app.service';
     PapersModule,
     DepartmentsModule,
     UsersModule,
+    SubscriptionsModule,
   ],
   controllers: [AppController],
   providers: [
@@ -40,12 +40,8 @@ import { AppService } from './app.service';
       useClass: ResponseInterceptor,
     },
     {
-      provide: APP_INTERCEPTOR,
-      useClass: ErrorInterceptor,
-    },
-    {
       provide: APP_FILTER,
-      useClass: HttpExceptionFilter,
+      useClass: ErrorInterceptor,
     },
   ],
 })
