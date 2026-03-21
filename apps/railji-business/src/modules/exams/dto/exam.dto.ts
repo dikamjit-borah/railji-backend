@@ -6,6 +6,8 @@ import {
   IsArray,
   ValidateNested,
   IsNotEmpty,
+  Min,
+  IsIn,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -92,4 +94,55 @@ export class StartExamDto {
   @IsString()
   @IsNotEmpty()
   departmentId: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @IsIn(['mock', 'live'], { message: 'examMode must be either mock or live' })
+  examMode: string
+}
+
+export class GetExamStatsDto {
+  @IsOptional()
+  @IsString()
+  startDate?: string;
+
+  @IsOptional()
+  @IsString()
+  endDate?: string;
+
+  @IsOptional()
+  @IsString()
+  departmentId?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  page?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  limit?: number;
+}
+
+export class GetExamHistoryDto {
+  @IsOptional()
+  @IsString()
+  startDate?: string;
+
+  @IsOptional()
+  @IsString()
+  endDate?: string;
+
+  @Type(() => Number)
+  @IsNumber()
+  @Min(1)
+  @IsOptional()
+  page?: number = 1;
+
+  @Type(() => Number)
+  @IsNumber()
+  @Min(1)
+  @IsOptional()
+  limit?: number = 10;
 }

@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
+import { EXAM_STATUS } from '../../../constants/app.constants';
 
 /* ---------- Sub Schemas ---------- */
 
@@ -49,9 +50,18 @@ export class Exam extends Document {
 
   @Prop({ required: true })
   paperId: string;
+  
+  @Prop({ required: true, enum: ['mock', 'live'] })
+  examMode: string;
 
   @Prop()
   paperName: string;
+
+  @Prop()
+  paperCode: string;
+
+  @Prop({ enum: ['general', 'sectional', 'full'] })
+  paperType: string;
 
   @Prop({ required: true })
   departmentId: string;
@@ -97,8 +107,8 @@ export class Exam extends Document {
 
   @Prop({
     required: true,
-    enum: ['in-progress', 'submitted', 'abandoned', 'timeout'],
-    default: 'in-progress',
+    enum: Object.values(EXAM_STATUS),
+    default: EXAM_STATUS.IN_PROGRESS,
   })
   status: string;
 

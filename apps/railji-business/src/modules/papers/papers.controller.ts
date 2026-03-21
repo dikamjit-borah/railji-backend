@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { PapersService } from './papers.service';
 import { FetchPapersQueryDto } from './dto/paper.dto';
+import { Public } from '../auth';
 
 @Controller('papers')
 export class PapersController {
@@ -23,6 +24,7 @@ export class PapersController {
     };
   }
 
+  @Public()
   @Get('top')
   @HttpCode(HttpStatus.OK)
   async getTopPapers() {
@@ -37,18 +39,18 @@ export class PapersController {
   @HttpCode(HttpStatus.OK)
   async fetchPapersForDepartment(
     @Param('departmentId') departmentId: string,
-    @Query() queryDto: FetchPapersQueryDto,
+    @Query() query: FetchPapersQueryDto,
   ) {
-    const page = queryDto.page || 1;
-    const limit = queryDto.limit || 10;
+    const page = query.page || 1;
+    const limit = query.limit || 10;
 
     // Build search query from optional filters
     const searchQuery: FetchPapersQueryDto = {};
-    if (queryDto.paperCode) searchQuery.paperCode = queryDto.paperCode;
-    if (queryDto.paperType) searchQuery.paperType = queryDto.paperType;
-    if (queryDto.year) searchQuery.year = queryDto.year;
-    if (queryDto.sortBy) searchQuery.sortBy = queryDto.sortBy;
-    if (queryDto.sortOrder) searchQuery.sortOrder = queryDto.sortOrder;
+    if (query.paperCode) searchQuery.paperCode = query.paperCode;
+    if (query.paperType) searchQuery.paperType = query.paperType;
+    if (query.year) searchQuery.year = query.year;
+    if (query.sortBy) searchQuery.sortBy = query.sortBy;
+    if (query.sortOrder) searchQuery.sortOrder = query.sortOrder;
 
     const result = await this.papersService.fetchPapersForDepartment(
       departmentId,
@@ -72,6 +74,7 @@ export class PapersController {
     };
   }
 
+  @Public()
   @Get(':departmentId/:paperId')
   @HttpCode(HttpStatus.OK)
   async fetchQuestionsForDepartmentPaper(

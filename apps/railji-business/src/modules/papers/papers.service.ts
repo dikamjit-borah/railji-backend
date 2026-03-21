@@ -194,7 +194,7 @@ export class PapersService {
       const skip = (page - 1) * limit;
 
       // Build the query with departmentId and any additional filters
-      const { page: _, limit: __, sortBy, sortOrder, ...filterQuery } = query;
+      const { page: _, limit: __, sortBy, sortOrder, ...filterQuery } = query || {};
       const searchQuery = {
         ...(query.paperType !== 'general' && { departmentId }),
         ...filterQuery,

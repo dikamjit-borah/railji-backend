@@ -3,6 +3,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { LoggerServiceProvider } from '@libs';
 import { config } from './config/config';
+import { API_PREFIX } from './constants/app.constants';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -30,7 +31,7 @@ async function bootstrap() {
   });
 
   // Global prefix
-  app.setGlobalPrefix('business/v1');
+  app.setGlobalPrefix(API_PREFIX);
 
   await app.listen(config.app.port, () => {
     loggerService.log(

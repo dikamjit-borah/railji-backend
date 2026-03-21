@@ -7,10 +7,18 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { randomUUID } from 'crypto';
+import { groupBy, map, meanBy, sumBy, countBy } from 'lodash';
 import { Exam } from './schemas/exam.schema';
-import { SubmitExamDto, StartExamDto } from './dto/exam.dto';
+import {
+  SubmitExamDto,
+  StartExamDto,
+  GetExamHistoryDto,
+  GetExamStatsDto,
+} from './dto/exam.dto';
 import { PapersService } from '../papers/papers.service';
-import { ErrorHandlerService } from '@railji/shared';
+import { ErrorHandlerService, buildDateFilter } from '@railji/shared';
+import { EXAM_STATUS } from '../../constants/app.constants';
+import { ExamStats } from './interfaces/exam.interface';
 
 @Injectable()
 export class ExamsService {
@@ -25,7 +33,7 @@ export class ExamsService {
   // Start exam session
   async startExam(startExamDto: StartExamDto): Promise<any> {
     try {
-      const { userId, paperId, departmentId } = startExamDto;
+      const { userId, paperId, departmentId, examMode } = startExamDto;
 
       // Generate unique attempt ID
       const examId = randomUUID();
@@ -36,8 +44,9 @@ export class ExamsService {
         userId,
         paperId,
         departmentId,
+        examMode,
         responses: [],
-        status: 'in-progress',
+        status: EXAM_STATUS.IN_PROGRESS,
         startTime: new Date(),
         deviceInfo: {
           device: 'Unknown',
@@ -80,7 +89,7 @@ export class ExamsService {
         throw new NotFoundException(`Paper with ID ${paperId} not found`);
       }
 
-      if (exam.status !== 'in-progress') {
+      if (exam.status !== EXAM_STATUS.IN_PROGRESS) {
         throw new BadRequestException(
           `Exam ${examId} is already ${exam.status}`,
         );
@@ -136,6 +145,8 @@ export class ExamsService {
 
       // Update exam record
       exam.paperName = paper.name;
+      exam.paperCode = paper.paperCode;
+      exam.paperType = paper.paperType;
       exam.responses = responses;
       exam.totalQuestions = paper.totalQuestions;
       exam.attemptedQuestions = attemptedQuestions;
@@ -148,31 +159,26 @@ export class ExamsService {
       exam.percentage = percentage;
       exam.accuracy = accuracy;
       exam.endTime = new Date();
-      exam.status = 'submitted';
+      exam.status = EXAM_STATUS.SUBMITTED;
       exam.isPassed = isPassed;
       exam.remarks = remarks;
-      
+
       // Calculate time taken in hours, minutes and seconds
       const timeTakenInSeconds = Math.floor(
-        (exam.endTime.getTime() - exam.startTime.getTime()) / 1000
+        (exam.endTime.getTime() - exam.startTime.getTime()) / 1000,
       );
       const hours = Math.floor(timeTakenInSeconds / 3600);
       const minutes = Math.floor((timeTakenInSeconds % 3600) / 60);
       const seconds = timeTakenInSeconds % 60;
-      
+
       exam.timeTaken = {
         hours,
         minutes,
         seconds,
       };
 
-      await exam.save();
-
-      this.logger.log(
-        `Exam submitted successfully. Score: ${score}/${maxScore} (${percentage.toFixed(2)}%)`,
-      );
-
-      return {
+      // Prepare response data
+      const responseData = {
         examId,
         score,
         maxScore,
@@ -188,6 +194,25 @@ export class ExamsService {
         negativeMarking: negativeMarkingPenalty,
         submittedAt: exam.endTime,
       };
+      
+      await exam.save();
+
+      // Handle exam mode logic
+      /* if (exam.examMode === 'live') {
+        // Save exam data for live exams
+        await exam.save();
+        this.logger.log(
+          `Live exam submitted successfully. Score: ${score}/${maxScore} (${percentage.toFixed(2)}%)`,
+        );
+      } else if (exam.examMode === 'mock') {
+        // Delete exam document for mock exams after preparing response
+        await this.examModel.deleteOne({ examId, userId }).exec();
+        this.logger.log(
+          `Mock exam submitted and deleted successfully. Score: ${score}/${maxScore} (${percentage.toFixed(2)}%)`,
+        );
+      } */
+
+      return responseData;
     } catch (error) {
       this.errorHandler.handle(error, { context: 'ExamsService.submitExam' });
     }
@@ -206,6 +231,168 @@ export class ExamsService {
     } catch (error) {
       this.errorHandler.handle(error, {
         context: 'ExamsService.fetchExamByExamId',
+      });
+    }
+  }
+
+  // Get exam stats by userId
+  async fetchExamStatsForUserId(
+    userId: string,
+    query?: GetExamStatsDto,
+  ): Promise<any> {
+    try {
+      const dateFilter = buildDateFilter(query.startDate, query.endDate);
+      const filter: Record<string, any> = {
+        userId,
+        examMode: 'live',
+        ...dateFilter,
+      };
+
+      /* if (query.departmentId) {
+      filter.departmentId = query.departmentId;
+    } */
+
+      // Fetch exams without responses field
+      const exams = await this.examModel
+        .find(filter)
+        .select('-responses')
+        .sort({ createdAt: -1 })
+        .exec();
+
+      if (!exams || exams.length === 0) {
+        throw new NotFoundException(`No exams found for user ${userId}`);
+      }
+
+      // Separate exams by paper type
+      const generalExams = exams.filter(exam => exam.paperType === 'general');
+      const nonGeneralExams = exams.filter(exam => exam.paperType === 'full' || exam.paperType === 'sectional');
+
+      const departmentstats = this.departmentStats(nonGeneralExams);
+      
+      const result: any = {
+        totalExams: exams.length,
+        totalDepartments: departmentstats.length,
+        departmentExams: departmentstats,
+      };
+
+      // Add paperCodeStats at root level for general paper type
+      if (generalExams.length > 0) {
+        result.generalExams = this.paperCodeStats(generalExams);
+      }
+
+      return result;
+    } catch (error) {
+      this.errorHandler.handle(error, {
+        context: 'ExamsService.fetchExamsByUserId',
+      });
+    }
+  }
+
+  private departmentStats(exams: Exam[]): ExamStats[] {
+    return map(groupBy(exams, 'departmentId'), (deptExams, departmentId) => {
+      const stats: any = {
+        departmentId,
+        ...this.calculateStats(deptExams),
+      };
+
+      // Only add paperCodeStats for full or sectional paper types
+      const nonGeneralExams = deptExams.filter(exam => 
+        exam.paperType === 'full' || exam.paperType === 'sectional'
+      );
+      
+      if (nonGeneralExams.length > 0) {
+        stats.paperCodeStats = this.paperCodeStats(nonGeneralExams);
+      }
+
+      return stats;
+    });
+  }
+
+  private paperCodeStats(exams: Exam[]): ExamStats[] {
+    return map(groupBy(exams, 'paperCode'), (paperExams, paperCode) => ({
+      paperCode: paperCode === 'undefined' ? 'NA' : paperCode,
+      ...this.calculateStats(paperExams),
+    }));
+  }
+
+  private calculateStats(exams: Exam[]) {
+    const totalExams = exams.length;
+    const statusCounts = countBy(exams, 'status');
+    const passedCount = sumBy(exams, (e) => (e.isPassed ? 1 : 0));
+    const failedCount = sumBy(exams, (e) =>
+      e.status === EXAM_STATUS.SUBMITTED && !e.isPassed ? 1 : 0,
+    );
+
+    return {
+      totalExams,
+      statusCount: {
+        [EXAM_STATUS.IN_PROGRESS]: statusCounts[EXAM_STATUS.IN_PROGRESS] || 0,
+        [EXAM_STATUS.SUBMITTED]: statusCounts[EXAM_STATUS.SUBMITTED] || 0,
+        [EXAM_STATUS.ABANDONED]: statusCounts[EXAM_STATUS.ABANDONED] || 0,
+        [EXAM_STATUS.TIMEOUT]: statusCounts[EXAM_STATUS.TIMEOUT] || 0,
+      },
+      averageScore: (meanBy(exams, 'score') || 0).toFixed(2),
+      averagePercentage: (meanBy(exams, 'percentage') || 0).toFixed(2),
+      averageAccuracy: (meanBy(exams, 'accuracy') || 0).toFixed(2),
+      totalCorrectAnswers: sumBy(exams, 'correctAnswers'),
+      totalIncorrectAnswers: sumBy(exams, 'incorrectAnswers'),
+      totalAttemptedQuestions: sumBy(exams, 'attemptedQuestions'),
+      totalUnattemptedQuestions: sumBy(exams, 'unattemptedQuestions'),
+      totalTimeTaken: {
+        hours: sumBy(exams, (e) => e.timeTaken?.hours || 0),
+        minutes: sumBy(exams, (e) => e.timeTaken?.minutes || 0),
+        seconds: sumBy(exams, (e) => e.timeTaken?.seconds || 0),
+      },
+      passedCount,
+      failedCount,
+      passRate:
+        totalExams > 0 ? ((passedCount / totalExams) * 100).toFixed(2) : '0.00',
+    };
+  }
+
+  async fetchExamHistoryForUserId(
+    userId: string,
+    page: number,
+    limit: number,
+    query: GetExamHistoryDto = {},
+  ): Promise<any> {
+    try {
+      const dateFilter = buildDateFilter(query.startDate, query.endDate);
+      const filter: Record<string, any> = {
+        userId,
+        ...dateFilter,
+      };
+
+      //Todo: Add filters if needed
+      const { page: _, limit: __ } = query || {};
+      const skip = (page - 1) * limit;
+
+      const [exams, total] = await Promise.all([
+        this.examModel
+          .find(filter)
+          .select('-responses')
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(limit)
+          .exec(),
+        this.examModel.countDocuments(filter).exec(),
+      ]);
+
+      if (!exams || exams.length === 0) {
+        throw new NotFoundException(`No exams found for user ${userId}`);
+      }
+
+      const totalPages = Math.ceil(total / limit);
+      return {
+        exams,
+        total,
+        page,
+        totalPages,
+        filter
+      };
+    } catch (error) {
+      this.errorHandler.handle(error, {
+        context: 'ExamsService.fetchExamHistoryForUserId',
       });
     }
   }

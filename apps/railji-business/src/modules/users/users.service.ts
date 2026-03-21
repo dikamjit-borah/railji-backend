@@ -1,8 +1,7 @@
 import { Injectable, Logger, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { nanoid } from 'nanoid';
-import { User } from '@libs';
+import { User, generateUserId } from '@libs';
 import { CreateUserDto } from './dto/create-user.dto';
 import { CacheService, ErrorHandlerService } from '@railji/shared';
 
@@ -18,7 +17,7 @@ export class UsersService {
     private readonly errorHandler: ErrorHandlerService,
   ) {}
 
-  async createUser(createUserDto: CreateUserDto): Promise<User> {
+  async createOrGetUser(createUserDto: CreateUserDto): Promise<{ user: User; created: boolean }> {
     try {
       // Check if user already exists
       const existingUser = await this.userModel.findOne({
@@ -29,11 +28,12 @@ export class UsersService {
       });
 
       if (existingUser) {
-        throw new ConflictException('User with this supabaseId or email already exists');
+        this.logger.log(`User already exists with userId: ${existingUser.userId}`);
+        return { user: existingUser, created: false };
       }
 
       // Generate nanoId for userId
-      const userId = nanoid();
+      const userId = generateUserId();
 
       const newUser = new this.userModel({
         userId,
@@ -43,7 +43,7 @@ export class UsersService {
       const savedUser = await newUser.save();
       this.logger.log(`User created successfully with userId: ${userId}`);
 
-      return savedUser;
+      return { user: savedUser, created: true };
     } catch (error) {
       this.errorHandler.handle(error, { context: 'UsersService.createUser' });
     }

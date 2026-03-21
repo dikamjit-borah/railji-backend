@@ -5,8 +5,10 @@ import {
   Delete,
   Body,
   Param,
+  Query,
   HttpStatus,
   HttpCode,
+  Get,
 } from '@nestjs/common';
 import { PapersService } from './papers.service';
 import { CreatePaperDto } from './dto/create-paper.dto';
@@ -44,10 +46,26 @@ export class PapersController {
 
   @Delete(':paperId')
   @HttpCode(HttpStatus.OK)
-  async remove(@Param('paperId') paperId: string) {
-    await this.papersService.deletePaper(paperId);
+  async remove(
+    @Param('paperId') paperId: string,
+    @Body('username') username?: string,
+  ) {
+    await this.papersService.deletePaper(paperId, username);
     return {
       message: 'Paper deleted successfully',
+    };
+  }
+
+  @Get('stats')
+  @HttpCode(HttpStatus.OK)
+  async getDashboardStats(
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    const result = await this.papersService.getDashboardStats(startDate, endDate);
+    return {
+      message: 'Paper logs retrieved successfully',
+      data: result,
     };
   }
 }
