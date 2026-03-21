@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, HttpException, HttpStatus } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Paper, QuestionBank } from '@railji/shared';
@@ -288,6 +288,15 @@ export class PapersService {
       if (!result || result.length === 0) {
         throw new NotFoundException(`Questions not found for paper ${paperId}`);
       }
+
+      // Check if the paper is free
+      if (result[0].paperDetails && !result[0].paperDetails.isFree) {
+        throw new HttpException(
+          `Payment required to access questions for paper ${paperId}`,
+          HttpStatus.PAYMENT_REQUIRED,
+        );
+      }
+
       return result[0];
     } catch (error) {
       this.errorHandler.handle(error, {
