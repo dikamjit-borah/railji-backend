@@ -43,29 +43,8 @@ export class ErrorHandlerService {
       this.logger.error(`[${context}] Error: ${error.message}`);
     }
 
-    // If it's already an HttpException, re-throw it
-    if (error instanceof HttpException) {
-      throw error;
-    }
-
-    // Handle specific error types
-    if (error instanceof NotFoundException) {
-      throw error;
-    }
-
-    if (error instanceof BadRequestException) {
-      throw error;
-    }
-
-    if (error instanceof UnauthorizedException) {
-      throw error;
-    }
-
-    if (error instanceof ForbiddenException) {
-      throw error;
-    }
-
-    if (error instanceof ConflictException) {
+    // If it has getStatus method, it's an HttpException - re-throw it
+    if (typeof error?.getStatus === 'function') {
       throw error;
     }
 
