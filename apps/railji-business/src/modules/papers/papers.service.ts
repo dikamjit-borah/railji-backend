@@ -74,7 +74,7 @@ export class PapersService {
     }
   }
 
-  async findById(paperId: string): Promise<Paper> {
+  async findByPaperId(paperId: string): Promise<Paper> {
     try {
       const paper = await this.paperModel.findOne({ paperId }).exec();
       if (!paper) {
@@ -82,7 +82,7 @@ export class PapersService {
       }
       return paper;
     } catch (error) {
-      this.errorHandler.handle(error, { context: 'PapersService.findById' });
+      this.errorHandler.handle(error, { context: 'papersService.findByPaperId' });
     }
   }
 
