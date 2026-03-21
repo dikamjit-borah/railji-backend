@@ -84,7 +84,7 @@ export class ExamsService {
       }
 
       // Fetch paper
-      const paper = await this.papersService.findById(paperId);
+      const paper = await this.papersService.findByPaperId(paperId);
       if (!paper) {
         throw new NotFoundException(`Paper with ID ${paperId} not found`);
       }

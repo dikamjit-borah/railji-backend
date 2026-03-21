@@ -5,10 +5,14 @@ import {
   Query,
   HttpStatus,
   HttpCode,
+  UseGuards,
+  Req,
 } from '@nestjs/common';
 import { PapersService } from './papers.service';
 import { FetchPapersQueryDto } from './dto/paper.dto';
 import { Public } from '../auth';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { PaperAccessGuard } from './guards/paper-access.guard';
 
 @Controller('papers')
 export class PapersController {
@@ -74,13 +78,17 @@ export class PapersController {
     };
   }
 
-  @Public()
+  @UseGuards(JwtAuthGuard, PaperAccessGuard)
   @Get(':departmentId/:paperId')
   @HttpCode(HttpStatus.OK)
   async fetchQuestionsForDepartmentPaper(
     @Param('departmentId') departmentId: string,
     @Param('paperId') paperId: string,
+    @Req() req: any,
   ) {
+    // Read paper from req.paper (set by PaperAccessGuard)
+    const paper = req.paper;
+    
     const questions = await this.papersService.fetchQuestionsForDepartmentPaper(
       departmentId,
       paperId,
