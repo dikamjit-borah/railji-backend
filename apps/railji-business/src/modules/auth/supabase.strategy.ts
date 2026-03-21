@@ -5,7 +5,7 @@ import { passportJwtSecret } from 'jwks-rsa';
 import { config } from '../../config/config';
 
 export interface JwtPayload {
-  sub: string; // user id
+  sub: string;
   email: string;
   role?: string;
   aud: string;
@@ -24,29 +24,24 @@ export class SupabaseStrategy extends PassportStrategy(Strategy, 'supabase') {
         cache: true,
         rateLimit: true,
         jwksRequestsPerMinute: 5,
-        jwksUri: `${config.supabase.url}/auth/v1/jwks`,
+        jwksUri: `${config.supabase.url}/auth/v1/.well-known/jwks.json`,
       }),
       audience: config.supabase.jwtAudience,
       issuer: `${config.supabase.url}/auth/v1`,
-      algorithms: ['RS256'],
+      algorithms: ['RS256', 'ES256'],
     });
   }
 
   async validate(payload: JwtPayload) {
-    try {
-      if (!payload.sub || !payload.email) {
-        this.logger.warn('Invalid token payload: missing sub or email');
-        throw new UnauthorizedException('Invalid token payload');
-      }
-
-      return {
-        userId: payload.sub,
-        email: payload.email,
-        role: payload.role || 'user',
-      };
-    } catch (error) {
-      this.logger.error('Token validation failed', error);
-      throw new UnauthorizedException('Token validation failed');
+    if (!payload.sub || !payload.email) {
+      this.logger.warn('Invalid token payload: missing sub or email');
+      throw new UnauthorizedException('Invalid token payload');
     }
+
+    return {
+      userId: payload.sub,
+      email: payload.email,
+      role: payload.role || 'user',
+    };
   }
 }

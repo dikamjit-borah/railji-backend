@@ -17,7 +17,6 @@ export class DepartmentsController {
     };
   }
 
-  @Public()
   @Get(':departmentId/materials')
   @HttpCode(HttpStatus.OK)
   async getMaterialsByDepartment(
