@@ -9,7 +9,7 @@ import { map } from 'rxjs/operators';
 
 export interface ApiResponse<T> {
   success: boolean;
-  statusCode: number;
+  statusCode?: number;
   message: string;
   data?: T;
   timestamp: string;
@@ -30,6 +30,11 @@ export class ResponseInterceptor<T> implements NestInterceptor<
 
     return next.handle().pipe(
       map((data) => {
+        // If data contains a statusCode, use it to set the response status
+        if (data?.statusCode) {
+          response.status(data.statusCode);
+        }
+        
         const statusCode = response.statusCode;
 
         return {
