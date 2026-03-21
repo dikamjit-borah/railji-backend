@@ -29,6 +29,8 @@ export { ErrorHandlerService } from './services/error-handler.service';
 // Schemas
 export { User, UserSchema } from './schemas/user.schema';
 export { Paper, PaperSchema } from './schemas/paper.schema';
+export { Plan, PlanSchema } from './schemas/plan.schema';
+export { Subscription, SubscriptionSchema } from './schemas/subscription.schema';
 export {
   QuestionBank,
   QuestionBankSchema,
