@@ -13,6 +13,7 @@ import {
 import { config } from './config/config';
 import { PapersModule } from './modules/papers/papers.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { UsersModule } from './modules/users/users.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { AuthModule } from './modules/auth/auth.module';
     SharedCommonModule,
     AuthModule,
     PapersModule,
+    UsersModule,
   ],
   controllers: [AppController],
   providers: [
