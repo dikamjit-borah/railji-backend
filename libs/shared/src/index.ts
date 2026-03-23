@@ -61,6 +61,13 @@ export {
   generateDepartmentId,
   generatePrefixedId,
 } from './utils/uuid.utils';
+export {
+  PaginationOptions,
+  PaginationMeta,
+  calculateSkip,
+  pagination,
+  paginate,
+} from './utils/pagination.utils';
 
 // Module
 export { SharedCommonModule } from './common/shared-common.module';

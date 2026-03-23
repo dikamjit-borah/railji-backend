@@ -13,6 +13,7 @@ import { FetchPapersQueryDto } from './dto/paper.dto';
 import { Public } from '../auth';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { PaperAccessGuard } from './guards/paper-access.guard';
+import { paginate } from '@railji/shared';
 
 @Controller('papers')
 export class PapersController {
@@ -45,8 +46,7 @@ export class PapersController {
     @Param('departmentId') departmentId: string,
     @Query() query: FetchPapersQueryDto,
   ) {
-    const page = query.page || 1;
-    const limit = query.limit || 10;
+    const { page, limit } = paginate(query.page, query.limit);
 
     // Build search query from optional filters
     const searchQuery: FetchPapersQueryDto = {};

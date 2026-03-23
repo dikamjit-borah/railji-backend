@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Paper, QuestionBank } from '@railji/shared';
 import { CacheService, ErrorHandlerService } from '@railji/shared';
+import { calculateSkip, pagination } from '@railji/shared';
 import { cleanObjectArrays, ensureCleanArray } from '../../utils/utils';
 import { FetchPapersQueryDto } from './dto/paper.dto';
 
@@ -191,7 +192,7 @@ export class PapersService {
     totalPages: number;
   }> {
     try {
-      const skip = (page - 1) * limit;
+      const skip = calculateSkip(page, limit);
 
       // Build the query with departmentId and any additional filters
       const { page: _, limit: __, sortBy, sortOrder, ...filterQuery } = query || {};
@@ -237,14 +238,10 @@ export class PapersService {
         this.paperModel.countDocuments(searchQuery).exec(),
       ]);
 
-      const totalPages = Math.ceil(total / limit);
-
       return {
         paperCodes,
         papers,
-        total,
-        page,
-        totalPages,
+        ...pagination(page, limit, total),
       };
     } catch (error) {
       this.errorHandler.handle(error, {

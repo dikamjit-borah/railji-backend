@@ -17,6 +17,7 @@ import {
 } from './dto/exam.dto';
 import { PapersService } from '../papers/papers.service';
 import { ErrorHandlerService, buildDateFilter } from '@railji/shared';
+import { calculateSkip, pagination } from '@railji/shared';
 import { EXAM_STATUS } from '../../constants/app.constants';
 import { ExamStats } from './interfaces/exam.interface';
 
@@ -365,7 +366,7 @@ export class ExamsService {
 
       //Todo: Add filters if needed
       const { page: _, limit: __ } = query || {};
-      const skip = (page - 1) * limit;
+      const skip = calculateSkip(page, limit);
 
       const [exams, total] = await Promise.all([
         this.examModel
@@ -382,12 +383,9 @@ export class ExamsService {
         throw new NotFoundException(`No exams found for user ${userId}`);
       }
 
-      const totalPages = Math.ceil(total / limit);
       return {
         exams,
-        total,
-        page,
-        totalPages,
+        ...pagination(page, limit, total),
         filter
       };
     } catch (error) {

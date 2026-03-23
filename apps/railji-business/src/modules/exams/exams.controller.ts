@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import { ExamsService } from './exams.service';
 import { SubmitExamDto, StartExamDto, GetExamStatsDto } from './dto/exam.dto';
+import { paginate } from '@railji/shared';
 
 @Controller('exams')
 export class ExamsController {
@@ -72,8 +73,7 @@ export class ExamsController {
     @Param('userId') userId: string,
     @Query() query: GetExamStatsDto,
   ) {
-    const page = query.page || 1;
-    const limit = query.limit || 10;
+    const { page, limit } = paginate(query.page, query.limit);
     const result = await this.examsService.fetchExamHistoryForUserId(
       userId,
       page,
@@ -82,15 +82,7 @@ export class ExamsController {
 
     return {
       message: 'Exam history fetched successfully',
-      data: {
-        exams: result.exams,
-        pagination: {
-          page: result.page,
-          limit,
-          total: result.total,
-          totalPages: result.totalPages,
-        },
-      },
+      data: result
     };
   }
 }
