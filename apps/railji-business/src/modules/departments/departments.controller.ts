@@ -1,6 +1,6 @@
 import { Controller, Get, Query, HttpStatus, HttpCode, Param } from '@nestjs/common';
 import { DepartmentsService } from './departments.service';
-import { Public } from '../auth';
+import { Public } from '@libs';
 
 @Controller('departments')
 export class DepartmentsController {

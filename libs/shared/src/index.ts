@@ -69,6 +69,9 @@ export {
   paginate,
 } from './utils/pagination.utils';
 
+// Auth
+export * from './auth';
+
 // Module
 export { SharedCommonModule } from './common/shared-common.module';
 

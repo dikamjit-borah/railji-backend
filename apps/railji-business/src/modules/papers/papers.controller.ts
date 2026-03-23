@@ -10,8 +10,7 @@ import {
 } from '@nestjs/common';
 import { PapersService } from './papers.service';
 import { FetchPapersQueryDto } from './dto/paper.dto';
-import { Public } from '../auth';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { Public, JwtAuthGuard } from '@libs';
 import { PaperAccessGuard } from './guards/paper-access.guard';
 import { paginate } from '@railji/shared';
 

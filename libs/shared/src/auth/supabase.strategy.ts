@@ -2,7 +2,6 @@ import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy, ExtractJwt } from 'passport-jwt';
 import { passportJwtSecret } from 'jwks-rsa';
-import { config } from '../../config/config';
 
 export interface JwtPayload {
   sub: string;
@@ -13,21 +12,26 @@ export interface JwtPayload {
   iat: number;
 }
 
+export interface SupabaseConfig {
+  url: string;
+  jwtAudience: string;
+}
+
 @Injectable()
 export class SupabaseStrategy extends PassportStrategy(Strategy, 'supabase') {
   private readonly logger = new Logger(SupabaseStrategy.name);
 
-  constructor() {
+  constructor(private readonly supabaseConfig: SupabaseConfig) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       secretOrKeyProvider: passportJwtSecret({
         cache: true,
         rateLimit: true,
         jwksRequestsPerMinute: 5,
-        jwksUri: `${config.supabase.url}/auth/v1/.well-known/jwks.json`,
+        jwksUri: `${supabaseConfig.url}/auth/v1/.well-known/jwks.json`,
       }),
-      audience: config.supabase.jwtAudience,
-      issuer: `${config.supabase.url}/auth/v1`,
+      audience: supabaseConfig.jwtAudience,
+      issuer: `${supabaseConfig.url}/auth/v1`,
       algorithms: ['RS256', 'ES256'],
     });
   }
