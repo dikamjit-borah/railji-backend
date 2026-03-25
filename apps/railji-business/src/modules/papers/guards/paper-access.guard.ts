@@ -8,18 +8,32 @@ import {
 } from '@nestjs/common';
 import { PapersService } from '../papers.service';
 import { SubscriptionsService } from '../../subscriptions/subscriptions.service';
+import { UsersService } from '../../users/users.service';
 
 @Injectable()
 export class PaperAccessGuard implements CanActivate {
   constructor(
     private readonly papersService: PapersService,
     private readonly subscriptionsService: SubscriptionsService,
+    private readonly usersService: UsersService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
     const paperId = request.params.paperId;
-    const userId = request.user?.userId;
+    const supabaseId = request.user?.userId;
+    
+    // Fetch userId from users collection using supabaseId
+    let userId: string | null = null;
+    if (supabaseId) {
+      try {
+        const user = await this.usersService.findUserBySupabaseId(supabaseId);
+        userId = user.userId;
+      } catch (error) {
+        // User not found in our database
+        userId = null;
+      }
+    }
 
     // Fetch paper by ID
     const paper = await this.papersService.findByPaperId(paperId);

@@ -5,6 +5,7 @@ import { PapersService } from './papers.service';
 import { Paper, PaperSchema, QuestionBank, QuestionBankSchema } from '@railji/shared';
 import { SharedCommonModule } from '@railji/shared';
 import { SubscriptionsModule } from '../subscriptions/subscriptions.module';
+import { UsersModule } from '../users/users.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { SubscriptionsModule } from '../subscriptions/subscriptions.module';
     ]),
     SharedCommonModule,
     SubscriptionsModule,
+    UsersModule,
   ],
   controllers: [PapersController],
   providers: [PapersService],

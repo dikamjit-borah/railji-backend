@@ -286,14 +286,6 @@ export class PapersService {
         throw new NotFoundException(`Questions not found for paper ${paperId}`);
       }
 
-      // Check if the paper is free
-      if (result[0].paperDetails && !result[0].paperDetails.isFree) {
-        throw new HttpException(
-          `Payment required to access questions for paper ${paperId}`,
-          HttpStatus.PAYMENT_REQUIRED,
-        );
-      }
-
       return result[0];
     } catch (error) {
       this.errorHandler.handle(error, {
