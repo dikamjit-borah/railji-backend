@@ -19,7 +19,7 @@ export class PaperAccessGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
     const paperId = request.params.paperId;
-    const userId = request.user.userId
+    const userId = request.user?.userId;
 
     // Fetch paper by ID
     const paper = await this.papersService.findByPaperId(paperId);
@@ -34,19 +34,20 @@ export class PaperAccessGuard implements CanActivate {
     }
 
     // Check if user is authenticated
-    if (!request.user) {
+    if (!userId) {
       throw new UnauthorizedException('Authentication required to access this paper');
     }
 
-    // Query for active subscription
-    const subscription = await this.subscriptionsService.findActiveForDepartment(
+    // Check if user has access to this paper (either paper-level or department-level subscription)
+    const hasAccess = await this.subscriptionsService.hasAccessToPaper(
       userId,
+      paperId,
       paper.departmentId,
     );
 
-    if (!subscription) {
+    if (!hasAccess) {
       throw new ForbiddenException(
-        'Active subscription required to access this paper',
+        'Active subscription required to access this paper. You need access to either this specific paper or its department.',
       );
     }
 

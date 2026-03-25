@@ -6,12 +6,16 @@ export class Subscription extends Document {
   @Prop({ required: true })
   userId: string;
 
-  @Prop({ required: true })
-  planId: string;
+  @Prop({ enum: ['department', 'paper'], required: true })
+  accessType: string;
 
-  // Denormalized for fast access checks — avoids joining Plan every time
-  @Prop({ required: true })
+  // For department-level access (single department per document)
+  @Prop()
   departmentId: string;
+
+  // For paper-level access (array of papers per document)
+  @Prop({ type: [String] })
+  paperIds: string[];
 
   @Prop({ enum: ['active', 'expired', 'cancelled'], default: 'active' })
   status: string;
@@ -20,13 +24,16 @@ export class Subscription extends Document {
   startDate: Date;
 
   @Prop({ required: true })
-  endDate: Date; // startDate + interval
+  endDate: Date;
 
   @Prop()
   paymentRef: string; // Razorpay/Stripe payment ID
 
   @Prop()
   paymentGateway: string; // 'razorpay' | 'stripe'
+
+  @Prop()
+  description: string; // Optional description of what this subscription covers
 }
 
 export const SubscriptionSchema = SchemaFactory.createForClass(Subscription);
