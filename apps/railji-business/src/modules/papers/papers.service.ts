@@ -6,6 +6,8 @@ import { CacheService, ErrorHandlerService } from '@railji/shared';
 import { calculateSkip, pagination } from '@railji/shared';
 import { cleanObjectArrays, ensureCleanArray } from '../../utils/utils';
 import { FetchPapersQueryDto } from './dto/paper.dto';
+import { UsersService } from '../users/users.service';
+import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 
 export interface PaperCodesByType {
   general: string[];
@@ -25,6 +27,8 @@ export class PapersService {
     private questionBankModel: Model<QuestionBank>,
     private readonly cacheService: CacheService,
     private readonly errorHandler: ErrorHandlerService,
+    private readonly usersService: UsersService,
+    private readonly subscriptionsService: SubscriptionsService,
   ) {}
 
   private generateCacheKey(departmentId: string, filters?: any): string {
@@ -184,9 +188,10 @@ export class PapersService {
     page: number = 1,
     limit: number = 10,
     query?: FetchPapersQueryDto,
+    supabaseId?: string,
   ): Promise<{
     paperCodes: PaperCodesByType;
-    papers: Paper[];
+    papers: (Paper & { hasAccess: boolean })[];
     total: number;
     page: number;
     totalPages: number;
@@ -238,9 +243,45 @@ export class PapersService {
         this.paperModel.countDocuments(searchQuery).exec(),
       ]);
 
+      // Fetch userId from supabaseId if provided
+      let userId: string | null = null;
+      if (supabaseId) {
+        try {
+          const user = await this.usersService.findUserBySupabaseId(supabaseId);
+          userId = user.userId;
+        } catch (error) {
+          // User not found in our database
+          userId = null;
+        }
+      }
+
+      // Add hasAccess field to each paper
+      const papersWithAccess = await Promise.all(
+        papers.map(async (paper) => {
+          let hasAccess = false;
+
+          // If paper is free, user has access
+          if (paper.isFree === true) {
+            hasAccess = true;
+          } else if (userId) {
+            // Check if user has access to this paper (either paper-level or department-level subscription)
+            hasAccess = await this.subscriptionsService.hasAccessToPaper(
+              userId,
+              paper.paperId,
+              paper.departmentId,
+            );
+          }
+
+          return {
+            ...paper.toObject(),
+            hasAccess,
+          };
+        })
+      );
+
       return {
         paperCodes,
-        papers,
+        papers: papersWithAccess,
         ...pagination(page, limit, total),
       };
     } catch (error) {

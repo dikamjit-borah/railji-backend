@@ -39,13 +39,16 @@ export class PapersController {
     };
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get(':departmentId')
   @HttpCode(HttpStatus.OK)
   async fetchPapersForDepartment(
     @Param('departmentId') departmentId: string,
     @Query() query: FetchPapersQueryDto,
+    @Req() req: any,
   ) {
     const { page, limit } = paginate(query.page, query.limit);
+    const supabaseId = req.user?.userId;
 
     // Build search query from optional filters
     const searchQuery: FetchPapersQueryDto = {};
@@ -60,6 +63,7 @@ export class PapersController {
       page,
       limit,
       searchQuery,
+      supabaseId,
     );
 
     return {
