@@ -68,9 +68,26 @@ export {
   pagination,
   paginate,
 } from './utils/pagination.utils';
+export {
+  getUserIdFromRequest,
+  IUserService,
+} from './utils/auth.utils';
 
 // Auth
 export * from './auth';
+
+// Middleware
+export { JwtAuthMiddleware } from './middleware/jwt-auth.middleware';
+
+// Guards
+export { RolesGuard } from './guards/roles.guard';
+
+// Decorators
+export { Roles, ROLES_KEY } from './decorators/roles.decorator';
+export {
+  RequireOwnership,
+  OWNERSHIP_KEY,
+} from './decorators/ownership.decorator';
 
 // Module
 export { SharedCommonModule } from './common/shared-common.module';
