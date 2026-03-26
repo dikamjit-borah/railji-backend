@@ -15,7 +15,7 @@ export class JwtAuthMiddleware implements NestMiddleware {
 
   async use(req: Request, res: Response, next: NextFunction) {
     // Check if route is in exclusion list
-    const isExcluded = this.isRouteExcluded(req.path);
+    const isExcluded = this.isRouteExcluded(req.baseUrl);
 
     if (isExcluded) {
       return next();
