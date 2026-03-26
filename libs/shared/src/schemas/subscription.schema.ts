@@ -34,6 +34,12 @@ export class Subscription extends Document {
 
   @Prop()
   description: string; // Optional description of what this subscription covers
+
+  @Prop({ default: Date.now })
+  createdAt: Date;
+
+  @Prop({ default: Date.now })
+  updatedAt: Date;
 }
 
 export const SubscriptionSchema = SchemaFactory.createForClass(Subscription);
