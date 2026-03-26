@@ -14,6 +14,7 @@ import {
 export interface ErrorHandlerOptions {
   context?: string;
   logStack?: boolean;
+  [key: string]: any; // Allow additional metadata fields
 }
 
 /**
