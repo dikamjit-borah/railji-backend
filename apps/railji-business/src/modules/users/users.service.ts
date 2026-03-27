@@ -3,17 +3,15 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User, generateUserId } from '@libs';
 import { CreateUserDto } from './dto/create-user.dto';
-import { CacheService, ErrorHandlerService } from '@railji/shared';
+import { ErrorHandlerService } from '@railji/shared';
 
 @Injectable()
 export class UsersService {
   private readonly logger = new Logger(UsersService.name);
-  private readonly CACHE_TTL = 30 * 60 * 1000; // 30 minutes
 
   constructor(
     @InjectModel(User.name)
     private readonly userModel: Model<User>,
-    private readonly cacheService: CacheService,
     private readonly errorHandler: ErrorHandlerService,
   ) {}
 
@@ -56,24 +54,12 @@ export class UsersService {
 
   async findAllUsers(): Promise<User[]> {
     try {
-      const cacheKey = 'all_users';
-
-      // Check cache first
-      const cached = this.cacheService.get<User[]>(cacheKey);
-
-      if (cached) {
-        this.logger.debug('Returning cached users data');
-        return cached;
-      }
-
       const users = await this.userModel.find().exec();
 
       if (!users || users.length === 0) {
         throw new NotFoundException('No users found');
       }
 
-      // Cache the result
-      this.cacheService.set(cacheKey, users, this.CACHE_TTL);
       this.logger.log(`Found ${users.length} users`);
 
       return users;
@@ -84,24 +70,12 @@ export class UsersService {
 
   async findUserById(userId: string): Promise<User> {
     try {
-      const cacheKey = `user_${userId}`;
-
-      // Check cache first
-      const cached = this.cacheService.get<User>(cacheKey);
-
-      if (cached) {
-        this.logger.debug(`Returning cached user data for userId: ${userId}`);
-        return cached;
-      }
-
       const user = await this.userModel.findOne({ userId }).exec();
 
       if (!user) {
         throw new NotFoundException(`User with userId ${userId} not found`);
       }
 
-      // Cache the result
-      this.cacheService.set(cacheKey, user, this.CACHE_TTL);
       this.logger.log(`Found user with userId: ${userId}`);
 
       return user;
@@ -112,24 +86,12 @@ export class UsersService {
 
   async findUserBySupabaseId(supabaseId: string): Promise<User> {
     try {
-      const cacheKey = `user_supabase_${supabaseId}`;
-
-      // Check cache first
-      const cached = this.cacheService.get<User>(cacheKey);
-
-      if (cached) {
-        this.logger.debug(`Returning cached user data for supabaseId: ${supabaseId}`);
-        return cached;
-      }
-
       const user = await this.userModel.findOne({ supabaseId }).exec();
 
       if (!user) {
         throw new NotFoundException(`User with supabaseId ${supabaseId} not found`);
       }
 
-      // Cache the result
-      this.cacheService.set(cacheKey, user, this.CACHE_TTL);
       this.logger.log(`Found user with supabaseId: ${supabaseId}`);
 
       return user;
@@ -149,10 +111,6 @@ export class UsersService {
       if (!user) {
         throw new NotFoundException(`User with userId ${userId} not found`);
       }
-
-      // Invalidate cache for this user
-      const cacheKey = `user_${userId}`;
-      this.cacheService.delete(cacheKey);
 
       this.logger.log(`Updated lastLoggedIn for user with userId: ${userId}`);
       return user;
