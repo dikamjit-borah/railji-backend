@@ -2,40 +2,21 @@ import { SetMetadata } from '@nestjs/common';
 
 export const OWNERSHIP_KEY = 'ownership';
 
-export interface OwnershipConfig {
-  required: boolean;
-  paramName?: string; // Check in params (e.g., params.userId)
-  bodyField?: string; // Check in body (e.g., body.examId)
-  checkType?: 'param' | 'body' | 'both'; // What to check
-}
-
 /**
  * Decorator to require ownership check on a route
  * Ensures the authenticated user can only access their own data
  * 
- * @param paramOrBodyField - The parameter/field name to check
- * @param checkType - Where to check: 'param' (default), 'body', or 'both'
+ * @param field - The field name to check (e.g., 'userId', 'examId')
+ * @param location - Where to find it: 'param' (URL params) or 'body' (request body)
  * 
  * @example
- * @RequireOwnership('userId') // Checks params.userId
- * @RequireOwnership('examId', 'body') // Checks body.examId against exam owner
- * @RequireOwnership('userId', 'both') // Checks both params and body
+ * @RequireOwnership('userId', 'param') // Checks if params.userId matches authenticated user
+ * @RequireOwnership('examId', 'body') // Checks if user owns the exam in body.examId
+ * @RequireOwnership('examId', 'param') // Checks if user owns the exam in params.examId
  */
 export const RequireOwnership = (
-  paramOrBodyField: string = 'userId',
-  checkType: 'param' | 'body' | 'both' = 'param',
+  field: string = 'userId',
+  location: 'param' | 'body' = 'param',
 ) => {
-  const config: OwnershipConfig = {
-    required: true,
-    checkType,
-  };
-
-  if (checkType === 'param' || checkType === 'both') {
-    config.paramName = paramOrBodyField;
-  }
-  if (checkType === 'body' || checkType === 'both') {
-    config.bodyField = paramOrBodyField;
-  }
-
-  return SetMetadata(OWNERSHIP_KEY, config);
+  return SetMetadata(OWNERSHIP_KEY, { field, location });
 };

@@ -16,7 +16,7 @@ import { UpdatePaperDto } from './dto/update-paper.dto';
 import { Roles } from '@railji/shared';
 
 @Controller('papers')
-@Roles('admin')
+@Roles('admin', 'superadmin')
 export class PapersController {
   constructor(private readonly papersService: PapersService) {}
 

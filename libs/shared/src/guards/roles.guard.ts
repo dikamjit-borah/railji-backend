@@ -11,13 +11,6 @@ import { IUserService } from '../utils/auth.utils';
 export const ROLES_KEY = 'roles';
 export const OWNERSHIP_KEY = 'ownership';
 
-export interface OwnershipConfig {
-  required: boolean;
-  paramName?: string;
-  bodyField?: string;
-  checkType?: 'param' | 'body' | 'both';
-}
-
 /**
  * Interface for services that can verify resource ownership
  * Implement this in your service to enable ownership checks on specific resources
@@ -41,10 +34,10 @@ export class RolesGuard implements CanActivate {
       context.getClass(),
     ]);
 
-    const ownershipConfig = this.reflector.getAllAndOverride<OwnershipConfig>(
-      OWNERSHIP_KEY,
-      [context.getHandler(), context.getClass()],
-    );
+    const ownershipConfig = this.reflector.getAllAndOverride<{
+      field: string;
+      location: 'param' | 'body';
+    }>(OWNERSHIP_KEY, [context.getHandler(), context.getClass()]);
 
     // If no roles or ownership required, allow access
     if (!roles && !ownershipConfig) {
@@ -78,7 +71,7 @@ export class RolesGuard implements CanActivate {
       }
 
       // Check ownership
-      if (ownershipConfig?.required) {
+      if (ownershipConfig) {
         await this.checkOwnership(request, user.userId, ownershipConfig);
       }
 
@@ -98,35 +91,32 @@ export class RolesGuard implements CanActivate {
   private async checkOwnership(
     request: any,
     userId: string,
-    config: OwnershipConfig,
+    config: { field: string; location: 'param' | 'body' },
   ): Promise<void> {
-    const checkType = config.checkType || 'param';
+    const resourceId =
+      config.location === 'param'
+        ? request.params[config.field]
+        : request.body?.[config.field];
 
-    // Check params
-    if (checkType === 'param' || checkType === 'both') {
-      const paramName = config.paramName || 'userId';
-      const requestedUserId = request.params[paramName];
+    if (!resourceId) {
+      return; // No resource to check
+    }
 
-      if (requestedUserId && requestedUserId !== userId) {
+    // If checking userId directly, just compare
+    if (config.field === 'userId') {
+      if (resourceId !== userId) {
         throw new ForbiddenException('You can only access your own data');
       }
+      return;
     }
 
-    // Check body field (e.g., examId) - verify ownership via service
-    if (checkType === 'body' || checkType === 'both') {
-      const bodyField = config.bodyField;
-      const resourceId = request.body?.[bodyField];
-
-      if (resourceId) {
-        if (!this.ownershipService) {
-          throw new Error(
-            'OwnershipService not provided but body ownership check requested',
-          );
-        }
-
-        // Delegate to service to verify ownership
-        await this.ownershipService.verifyOwnership(resourceId, userId);
-      }
+    // For other resources (examId, paperId, etc.), verify via service
+    if (!this.ownershipService) {
+      throw new Error(
+        `Ownership check for '${config.field}' requires an OwnershipService`,
+      );
     }
+
+    await this.ownershipService.verifyOwnership(resourceId, userId);
   }
 }
