@@ -129,6 +129,12 @@ export class UsersService {
         throw new UnauthorizedException('User not authorized for dashboard access');
       }
 
+      // Check if user has admin or superadmin role
+      if (existingUser.userType !== 'admin' && existingUser.userType !== 'superadmin') {
+        this.logger.warn(`User ${userEmail} attempted dashboard login with userType: ${existingUser.userType}`);
+        throw new UnauthorizedException('User not authorized for dashboard access');
+      }
+
       // Update lastLoggedIn for existing user
       existingUser.lastLoggedIn = new Date();
       existingUser.supabaseId = supabaseId; // Ensure supabaseId is updated

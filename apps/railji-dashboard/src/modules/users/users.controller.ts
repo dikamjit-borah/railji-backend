@@ -47,7 +47,6 @@ export class UsersController {
     };
   }
 
-  @Roles('admin', 'superadmin')
   @Post('login')
   @HttpCode(HttpStatus.OK)
   async login(@Body() { email, password }: { email: string; password: string }) {
