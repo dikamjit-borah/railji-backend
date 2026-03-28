@@ -2,18 +2,21 @@ import { Injectable, Logger, NotFoundException, ConflictException } from '@nestj
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User, generateUserId } from '@libs';
+import { SharedUsersService } from '@railji/shared';
 import { CreateUserDto } from './dto/create-user.dto';
 import { ErrorHandlerService } from '@railji/shared';
 
 @Injectable()
-export class UsersService {
+export class UsersService extends SharedUsersService {
   private readonly logger = new Logger(UsersService.name);
 
   constructor(
     @InjectModel(User.name)
-    private readonly userModel: Model<User>,
+    userModel: Model<User>,
     private readonly errorHandler: ErrorHandlerService,
-  ) {}
+  ) {
+    super(userModel);
+  }
 
   async createOrGetUser(createUserDto: CreateUserDto): Promise<{ user: User; created: boolean }> {
     try {
@@ -68,37 +71,7 @@ export class UsersService {
     }
   }
 
-  async findUserById(userId: string): Promise<User> {
-    try {
-      const user = await this.userModel.findOne({ userId }).exec();
-
-      if (!user) {
-        throw new NotFoundException(`User with userId ${userId} not found`);
-      }
-
-      this.logger.log(`Found user with userId: ${userId}`);
-
-      return user;
-    } catch (error) {
-      this.errorHandler.handle(error, { context: 'UsersService.findUserById' });
-    }
-  }
-
-  async findUserBySupabaseId(supabaseId: string): Promise<User> {
-    try {
-      const user = await this.userModel.findOne({ supabaseId }).exec();
-
-      if (!user) {
-        throw new NotFoundException(`User with supabaseId ${supabaseId} not found`);
-      }
-
-      this.logger.log(`Found user with supabaseId: ${supabaseId}`);
-
-      return user;
-    } catch (error) {
-      this.errorHandler.handle(error, { context: 'UsersService.findUserBySupabaseId' });
-    }
-  }
+  // findUserById and findUserBySupabaseId are inherited from SharedUsersService
 
   async updateLastLoggedIn(userId: string): Promise<User> {
     try {

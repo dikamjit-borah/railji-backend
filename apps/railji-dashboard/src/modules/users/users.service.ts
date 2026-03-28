@@ -1,20 +1,21 @@
 import { ForbiddenException, Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { User, ErrorHandlerService, generateUserId } from '@railji/shared';
+import { User, ErrorHandlerService, generateUserId, SharedUsersService } from '@railji/shared';
 import { calculateSkip, pagination } from '@railji/shared';
 import { createClient } from '@supabase/supabase-js';
 import { config } from '../../config/config';
 
 @Injectable()
-export class UsersService {
+export class UsersService extends SharedUsersService {
   private readonly logger = new Logger(UsersService.name);
   private supabase;
 
   constructor(
-    @InjectModel(User.name) private userModel: Model<User>,
+    @InjectModel(User.name) userModel: Model<User>,
     private errorHandler: ErrorHandlerService,
   ) {
+    super(userModel);
     // Initialize Supabase client
     this.supabase = createClient(
       config.supabase.url,
@@ -49,16 +50,7 @@ export class UsersService {
     }
   }
 
-  async findUserBySupabaseId(supabaseId: string): Promise<any> {
-    try {
-      const user = await this.userModel.findOne({ supabaseId }).lean().exec();
-      return user;
-    } catch (error) {
-      this.errorHandler.handle(error, {
-        context: 'UsersService.findUserBySupabaseId',
-      });
-    }
-  }
+  // findUserBySupabaseId is inherited from SharedUsersService
 
   async toggle(userId: string) {
     try {
@@ -150,5 +142,4 @@ export class UsersService {
       this.errorHandler.handle(error, { context: 'UsersService.login' });
     }
   }
-
 }

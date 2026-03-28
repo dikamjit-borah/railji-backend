@@ -25,6 +25,7 @@ export {
 } from './services/http-client.service';
 export { CacheService } from './services/cache.service';
 export { ErrorHandlerService } from './services/error-handler.service';
+export { SharedUsersService } from './services/users.service';
 
 // Schemas
 export { User, UserSchema } from './schemas/user.schema';
