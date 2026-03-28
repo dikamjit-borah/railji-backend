@@ -12,9 +12,6 @@ export class Department extends Document {
   @Prop({ required: true })
   name: string;
 
-  @Prop({ required: true })
-  fullName: string;
-
   @Prop()
   description: string;
 
