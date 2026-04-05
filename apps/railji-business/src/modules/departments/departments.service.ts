@@ -33,9 +33,10 @@ export class DepartmentsService {
       let departments = this.cacheService.get<Department[]>(departmentsCacheKey);
 
       if (!departments) {
-        // Fetch from database if not cached
+        // Fetch from database if not cached - only active departments
+        const filterQuery = { ...query, isActive: true };
         departments = await this.departmentModel
-          .find(query || {})
+          .find(filterQuery)
           .sort({ departmentId: 1 })
           .exec();
 

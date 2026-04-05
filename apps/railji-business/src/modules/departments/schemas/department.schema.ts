@@ -27,6 +27,9 @@ export class Department extends Document {
   @Prop({ default: 0 })
   materialCount: number;
 
+  @Prop({ default: true })
+  isActive: boolean;
+
   @Prop({ default: Date.now })
   createdAt: Date;
 
