@@ -95,8 +95,26 @@ export class PapersService {
         return cached;
       }
 
-      // Fetch from database
-      const papers = await this.paperModel.find().limit(6).exec();
+      // Fetch from database - only general papers with unique paperCode
+      const papers = await this.paperModel
+        .aggregate([
+          {
+            $match: { paperType: 'general', isFree: true },
+          },
+          {
+            $group: {
+              _id: '$paperCode',
+              paper: { $first: '$$ROOT' },
+            },
+          },
+          {
+            $replaceRoot: { newRoot: '$paper' },
+          },
+          {
+            $limit: 5,
+          },
+        ])
+        .exec();
 
       // Cache the result
       this.cacheService.set(
