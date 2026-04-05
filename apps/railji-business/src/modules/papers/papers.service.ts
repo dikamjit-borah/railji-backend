@@ -326,10 +326,12 @@ export class PapersService {
             hasAccess = true;
           } else if (userId) {
             // Check if user has access to this paper (either paper-level or department-level subscription)
+            // For general papers, users with any department access should have access
             hasAccess = await this.subscriptionsService.hasAccessToPaper(
               userId,
               paper.paperId,
               paper.departmentId,
+              paper.paperType === 'general',
             );
           }
 

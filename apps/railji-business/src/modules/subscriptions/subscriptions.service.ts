@@ -14,7 +14,25 @@ export class SubscriptionsService {
     userId: string,
     paperId: string,
     departmentId: string,
+    isGeneralPaper: boolean = false,
   ): Promise<boolean> {
+    // If it's a general paper, check if user has access to any department
+    if (isGeneralPaper) {
+      const anyDepartmentAccess = await this.subscriptionModel
+        .findOne({
+          userId,
+          status: 'active',
+          endDate: { $gt: new Date() },
+          accessType: 'department',
+        })
+        .exec();
+      
+      if (anyDepartmentAccess) {
+        return true;
+      }
+    }
+
+    // Check for specific paper or department access
     const subscription = await this.subscriptionModel
       .findOne({
         userId,
