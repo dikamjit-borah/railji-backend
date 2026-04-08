@@ -266,6 +266,7 @@ export class PapersService {
       // Build query based only on provided filters
       const searchQuery: any = {
         ...filterQuery,
+        departmentId,
       };
 
 
