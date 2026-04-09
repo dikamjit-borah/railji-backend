@@ -15,6 +15,7 @@ import { Request } from 'express';
 import { PaymentsService } from './services/payments.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { VerifyPaymentDto } from './dto/verify-payment.dto';
+import { MissingSignatureException } from './exceptions/payment.exceptions';
 
 @Controller('payments')
 export class PaymentsController {
@@ -58,7 +59,7 @@ export class PaymentsController {
     this.logger.log(`Webhook received - Body: ${JSON.stringify(req.body)}, Signature: ${signature}`);
     
     if (!signature) {
-      throw new Error('Missing signature');
+      throw new MissingSignatureException();
     }
 
     const rawBody = req.rawBody || Buffer.from(JSON.stringify(req.body));

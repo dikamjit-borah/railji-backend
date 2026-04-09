@@ -7,6 +7,7 @@ import {
   WebhookEvent,
 } from '../interfaces/payment-gateway.interface';
 import { config } from '../../config/config';
+import { PaymentGatewayException } from '../exceptions/payment.exceptions';
 
 @Injectable()
 export class RazorpayGateway implements IPaymentGateway {
@@ -44,7 +45,7 @@ export class RazorpayGateway implements IPaymentGateway {
     metadata: Record<string, any>,
   ): Promise<OrderResult> {
     if (!this.razorpay) {
-      throw new Error('Razorpay not configured');
+      throw new PaymentGatewayException('Razorpay not configured');
     }
 
     const options = {
@@ -78,7 +79,7 @@ export class RazorpayGateway implements IPaymentGateway {
 
   async getTransaction(paymentId: string): Promise<TransactionResult> {
     if (!this.razorpay) {
-      throw new Error('Razorpay not configured');
+      throw new PaymentGatewayException('Razorpay not configured');
     }
 
     const payment = await this.razorpay.payments.fetch(paymentId);

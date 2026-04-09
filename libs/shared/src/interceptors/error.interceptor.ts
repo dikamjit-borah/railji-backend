@@ -19,11 +19,6 @@ export class ErrorInterceptor implements ExceptionFilter {
     const ctx = host.switchToHttp();
     const request = ctx.getRequest();
 
-    // Debug logging
-    this.logger.debug(`Exception type: ${exception?.constructor?.name}`);
-    this.logger.debug(`instanceof HttpException: ${exception instanceof HttpException}`);
-    this.logger.debug(`Has getStatus: ${typeof exception?.getStatus === 'function'}`);
-
     let httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
     let message = 'Internal server error';
     let error: string | undefined;
