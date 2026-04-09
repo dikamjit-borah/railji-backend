@@ -27,7 +27,7 @@ export const config = {
   payment: {
     gateway: process.env.PAYMENT_GATEWAY || 'razorpay',
     razorpay: {
-      apiKey: process.env.RAZORPAY_API_KEY || '',
+      keyId: process.env.RAZORPAY_KEY_ID || '',
       keySecret: process.env.RAZORPAY_KEY_SECRET || '',
     },
     stripe: {

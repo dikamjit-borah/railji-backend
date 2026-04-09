@@ -29,7 +29,7 @@ export class PaymentTransaction {
   @Prop({ required: true, enum: Object.values(TransactionType) })
   type: TransactionType;
 
-  @Prop({ required: true, enum: ['razorpay', 'stripe', 'payu'] })
+  @Prop({ required: true, default: 'razorpay' })
   gateway: string;
 
   @Prop({ required: true })

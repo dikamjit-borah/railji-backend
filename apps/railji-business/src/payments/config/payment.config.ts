@@ -1,17 +1,7 @@
 export type PaymentGatewayType = 'razorpay' | 'stripe' | 'payu';
 
-export interface PaymentConfig {
-  gateway: PaymentGatewayType;
-  razorpay: {
-    apiKey: string;
-    keySecret: string;
-  };
-  stripe: {
-    secretKey: string;
-    webhookSecret: string;
-  };
-  payu: {
-    merchantKey: string;
-    merchantSalt: string;
-  };
-}
+export const PAYMENT_GATEWAY_TOKENS = {
+  RAZORPAY: 'RAZORPAY_GATEWAY',
+  STRIPE: 'STRIPE_GATEWAY',
+  PAYU: 'PAYU_GATEWAY',
+} as const;

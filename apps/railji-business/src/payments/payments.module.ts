@@ -5,13 +5,11 @@ import { PaymentsService } from './services/payments.service';
 import { PaymentGatewayFactory } from './services/payment-gateway.factory';
 import { PaymentTransactionService } from './services/payment-transaction.service';
 import { RazorpayGateway } from './gateways/razorpay.gateway';
-import { StripeGateway } from './gateways/stripe.gateway';
-import { PayUGateway } from './gateways/payu.gateway';
 import {
   PaymentTransaction,
   PaymentTransactionSchema,
 } from './schemas/payment-transaction.schema';
-import { PAYMENT_GATEWAY_TOKENS } from '../constants/app.constants';
+import { PAYMENT_GATEWAY_TOKENS } from './config/payment.config';
 
 @Module({
   imports: [
@@ -24,20 +22,16 @@ import { PAYMENT_GATEWAY_TOKENS } from '../constants/app.constants';
     PaymentsService,
     PaymentGatewayFactory,
     PaymentTransactionService,
-    // Register gateway implementations with tokens
     {
       provide: PAYMENT_GATEWAY_TOKENS.RAZORPAY,
       useClass: RazorpayGateway,
     },
-    {
-      provide: PAYMENT_GATEWAY_TOKENS.STRIPE,
-      useClass: StripeGateway,
-    },
-    {
-      provide: PAYMENT_GATEWAY_TOKENS.PAYU,
-      useClass: PayUGateway,
-    },
+    // Add other gateways here when needed
+    // {
+    //   provide: PAYMENT_GATEWAY_TOKENS.STRIPE,
+    //   useClass: StripeGateway,
+    // },
   ],
-  exports: [PaymentsService, PaymentGatewayFactory, PaymentTransactionService],
+  exports: [PaymentsService],
 })
 export class PaymentsModule {}

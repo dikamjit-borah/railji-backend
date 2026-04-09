@@ -5,18 +5,6 @@ export interface OrderResult {
   status: string;
   createdAt: Date;
   metadata?: Record<string, any>;
-  // For redirect-based gateways (PayU, some Stripe flows)
-  redirectUrl?: string;
-  // For client-side integration (Razorpay, Stripe)
-  clientSecret?: string;
-}
-
-export interface RefundResult {
-  refundId: string;
-  paymentId: string;
-  amount: number;
-  status: string;
-  createdAt: Date;
 }
 
 export interface TransactionResult {
@@ -32,7 +20,6 @@ export interface TransactionResult {
 
 export interface WebhookEvent {
   event: string;
-  vendor: string;
   paymentId?: string;
   orderId?: string;
   status?: string;
@@ -47,9 +34,7 @@ export interface IPaymentGateway {
     metadata: Record<string, any>,
   ): Promise<OrderResult>;
 
-  verifyPayment(paymentId: string, signature: string): Promise<boolean>;
-
-  refund(paymentId: string, amount?: number): Promise<RefundResult>;
+  verifyPayment(orderId: string, paymentId: string, signature: string): Promise<boolean>;
 
   getTransaction(paymentId: string): Promise<TransactionResult>;
 
