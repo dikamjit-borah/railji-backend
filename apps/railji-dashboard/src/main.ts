@@ -29,11 +29,23 @@ async function bootstrap() {
     }),
   );
 
-  // Enable CORS (optional)
+  // Enable CORS
+  const isProduction = process.env.NODE_ENV === 'stage' || process.env.NODE_ENV === 'production';
+  const corsOrigin = process.env.CORS_ORIGIN;
+  
   app.enableCors({
-    origin: process.env.CORS_ORIGIN || '*',
-    credentials: true,
+    origin: isProduction ? (corsOrigin ? corsOrigin.split(',').map(o => o.trim()) : true) : true,
+    credentials: isProduction,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'sec-ch-ua', 'sec-ch-ua-mobile', 'sec-ch-ua-platform'],
   });
+
+  loggerService.log(
+    isProduction 
+      ? `CORS: Production mode (${corsOrigin || 'all origins'})` 
+      : 'CORS: Development mode (all origins, no credentials)',
+    'Bootstrap'
+  );
 
   // Global prefix
   app.setGlobalPrefix('dashboard/v1');

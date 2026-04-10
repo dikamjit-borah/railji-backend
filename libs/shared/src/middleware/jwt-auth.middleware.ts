@@ -89,7 +89,8 @@ export class JwtAuthMiddleware implements NestMiddleware {
     return this.excludedRoutes.some((excludedRoute) => {
       // Convert route pattern to regex (handle :param patterns)
       const pattern = excludedRoute.replace(/:[^\s/]+/g, '[^/]+');
-      const regex = new RegExp(`^${pattern}$`);
+      // Match with or without trailing slash
+      const regex = new RegExp(`^${pattern}/?$`);
       return regex.test(path);
     });
   }
