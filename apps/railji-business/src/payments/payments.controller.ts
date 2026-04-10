@@ -10,26 +10,39 @@ import {
   HttpStatus,
   Logger,
   RawBodyRequest,
+  ForbiddenException,
 } from '@nestjs/common';
 import { Request } from 'express';
 import { PaymentsService } from './services/payments.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { VerifyPaymentDto } from './dto/verify-payment.dto';
 import { MissingSignatureException } from './exceptions/payment.exceptions';
+import { SharedUsersService } from '@railji/shared';
 
 @Controller('payments')
 export class PaymentsController {
   private readonly logger = new Logger(PaymentsController.name);
 
-  constructor(private readonly paymentsService: PaymentsService) {}
+  constructor(
+    private readonly paymentsService: PaymentsService,
+    private readonly usersService: SharedUsersService,
+  ) {}
 
   @Post('order')
   @HttpCode(HttpStatus.CREATED)
-  async createOrder(@Body() createOrderDto: CreateOrderDto) {
+  async createOrder(@Body() createOrderDto: CreateOrderDto, @Req() req: any) {
     this.logger.log('Creating order');
+    
+    const user = await this.usersService.getUserFromRequest(req);
+    const userId = user.userId;
+    
+    if (!userId) {
+      throw new ForbiddenException('User not authenticated');
+    }
+
     return this.paymentsService.createOrder(
-      createOrderDto.amount,
-      createOrderDto.currency,
+      createOrderDto.planId,
+      userId,
       createOrderDto.metadata || {},
     );
   }
@@ -77,4 +90,11 @@ export class PaymentsController {
   async getUserTransactions(@Param('userId') userId: string) {
     return this.paymentsService.getUserTransactions(userId);
   }
+
+  @Get('plans')
+  @HttpCode(HttpStatus.OK)
+  async getPlans() {
+    return this.paymentsService.getPlans();
+  }
+
 }

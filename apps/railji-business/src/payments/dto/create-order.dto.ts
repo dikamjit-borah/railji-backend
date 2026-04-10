@@ -1,12 +1,8 @@
-import { IsNumber, IsString, IsOptional, IsObject, Min } from 'class-validator';
+import {  IsString, IsOptional, IsObject } from 'class-validator';
 
 export class CreateOrderDto {
-  @IsNumber()
-  @Min(1)
-  amount: number;
-
   @IsString()
-  currency: string;
+  planId: string;
 
   @IsOptional()
   @IsObject()

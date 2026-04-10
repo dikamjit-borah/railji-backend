@@ -10,18 +10,35 @@ import {
   PaymentTransactionSchema,
 } from './schemas/payment-transaction.schema';
 import { PAYMENT_GATEWAY_TOKENS } from './config/payment.config';
+import {
+  SharedSubscriptionsService,
+  SharedUsersService,
+  Subscription,
+  SubscriptionSchema,
+  Plan,
+  PlanSchema,
+  User,
+  UserSchema,
+  SharedCommonModule,
+} from '@railji/shared';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: PaymentTransaction.name, schema: PaymentTransactionSchema },
+      { name: Subscription.name, schema: SubscriptionSchema },
+      { name: Plan.name, schema: PlanSchema },
+      { name: User.name, schema: UserSchema },
     ]),
+    SharedCommonModule,
   ],
   controllers: [PaymentsController],
   providers: [
     PaymentsService,
     PaymentGatewayFactory,
     PaymentTransactionService,
+    SharedSubscriptionsService,
+    SharedUsersService,
     {
       provide: PAYMENT_GATEWAY_TOKENS.RAZORPAY,
       useClass: RazorpayGateway,
