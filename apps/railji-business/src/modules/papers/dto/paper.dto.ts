@@ -92,6 +92,10 @@ export class FetchPapersQueryDto {
 
   @IsString()
   @IsOptional()
+  createdBy?: string;
+
+  @IsString()
+  @IsOptional()
   sortBy?: 'name' | 'rating' | 'updatedAt';
 
   @IsString()

@@ -121,6 +121,7 @@ export class PapersController {
     if (query.paperCode) searchQuery.paperCode = query.paperCode;
     if (query.paperType) searchQuery.paperType = query.paperType;
     if (query.year) searchQuery.year = query.year;
+    if (query.createdBy) searchQuery.createdBy = query.createdBy
     if (query.sortBy) searchQuery.sortBy = query.sortBy;
     if (query.sortOrder) searchQuery.sortOrder = query.sortOrder;
 
