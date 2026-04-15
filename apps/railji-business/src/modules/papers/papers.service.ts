@@ -45,11 +45,11 @@ export class PapersService {
       const cacheKey = `designations:${departmentId}`;
 
       // Check cache first
-      const cached = this.cacheService.get<string[]>(cacheKey);
+      /* const cached = this.cacheService.get<string[]>(cacheKey);
       if (cached) {
         this.logger.debug(`Returning cached designations for department: ${departmentId}`);
         return cached;
-      }
+      } */
 
       // Fetch distinct designations for the department
       const designations = await this.paperModel
