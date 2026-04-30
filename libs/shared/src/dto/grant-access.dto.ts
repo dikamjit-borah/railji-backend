@@ -10,6 +10,10 @@ export class GrantAccessDto {
 
   @IsString()
   @IsOptional()
+  planId?: string;
+
+  @IsString()
+  @IsOptional()
   paperId?: string;
 
   @IsDateString()
