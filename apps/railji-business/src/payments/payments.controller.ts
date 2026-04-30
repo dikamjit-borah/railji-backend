@@ -97,4 +97,11 @@ export class PaymentsController {
     return this.paymentsService.getPlans();
   }
 
+  @Get('subscriptions')
+  @HttpCode(HttpStatus.OK)
+  async getUserSubscriptions(@Req() req: any) {
+    const user = await this.usersService.getUserFromRequest(req);
+    return this.paymentsService.getUserSubscriptions(user.userId);
+  }
+
 }

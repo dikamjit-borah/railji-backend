@@ -87,6 +87,7 @@ export class PaymentsService {
       }
 
       const transaction = transactions[0];
+      const planId = transaction.metadata?.planId;
       const departmentId = transaction.metadata?.departmentId;
       const userId = transaction.userId;
       const durationMonths = transaction.metadata?.durationMonths || 12;
@@ -104,6 +105,7 @@ export class PaymentsService {
       await this.subscriptionsService.grantAccess({
         userId,
         departmentId,
+        planId,
         startDate: startDate.toISOString(),
         endDate: endDate.toISOString(),
         paymentRef: paymentId,
@@ -157,5 +159,15 @@ export class PaymentsService {
 
   async getPlans() {
     return this.planModel.find({ isActive: true }).sort({ departmentId: 1 }).exec();
+  }
+
+  async getUserSubscriptions(userId: string) {
+    const subscriptions = await this.subscriptionsService.findActiveSubscription(userId);
+    
+    if (!subscriptions || subscriptions.length === 0) {
+      throw new NotFoundException(`No active subscription found for user ${userId}`);
+    }
+    
+    return subscriptions;
   }
 }

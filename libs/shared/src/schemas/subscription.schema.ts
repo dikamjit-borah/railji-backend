@@ -13,6 +13,9 @@ export class Subscription extends Document {
   @Prop()
   departmentId: string;
 
+  @Prop()
+  planId: string;
+
   // For paper-level access (array of papers per document)
   @Prop({ type: [String] })
   paperIds: string[];

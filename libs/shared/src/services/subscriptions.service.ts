@@ -103,17 +103,18 @@ export class SharedSubscriptionsService {
     endDate: Date,
     dto: GrantAccessDto
   ): Promise<Subscription> {
-    const existing = await this.findActiveSubscription(userId, 'department', departmentId);
+    const existingSubscriptions = await this.findActiveSubscription(userId, 'department', departmentId);
 
-    if (existing) {
+    if (existingSubscriptions.length > 0) {
       this.logger.warn(`User ${userId} already has active subscription for department ${departmentId}`);
-      return existing;
+      return existingSubscriptions[0];
     }
 
     return this.createSubscription({
       userId,
       accessType: 'department',
       departmentId,
+      planId: dto.planId,
       startDate,
       endDate,
       description: dto.description || `Department access: ${departmentId}`,
@@ -129,10 +130,10 @@ export class SharedSubscriptionsService {
     endDate: Date,
     dto: GrantAccessDto
   ): Promise<Subscription> {
-    const existing = await this.findActiveSubscription(userId, 'paper');
+    const existingSubscriptions = await this.findActiveSubscription(userId, 'paper');
 
-    if (existing) {
-      return this.appendPaperToSubscription(existing, paperId, userId, dto.description);
+    if (existingSubscriptions.length > 0) {
+      return this.appendPaperToSubscription(existingSubscriptions[0], paperId, userId, dto.description);
     }
 
     return this.createSubscription({
@@ -147,23 +148,26 @@ export class SharedSubscriptionsService {
     });
   }
 
-  protected async findActiveSubscription(
+  async findActiveSubscription(
     userId: string,
-    accessType: string,
+    accessType?: string,
     departmentId?: string
-  ): Promise<Subscription | null> {
+  ): Promise<Subscription[]> {
     const query: any = {
       userId,
-      accessType,
       status: 'active',
       endDate: { $gt: new Date() },
     };
+
+    if (accessType) {
+      query.accessType = accessType;
+    }
 
     if (departmentId) {
       query.departmentId = departmentId;
     }
 
-    return this.subscriptionModel.findOne(query).exec();
+    return this.subscriptionModel.find(query).exec();
   }
 
   protected async appendPaperToSubscription(
@@ -194,6 +198,7 @@ export class SharedSubscriptionsService {
     paymentRef?: string;
     paymentGateway?: string;
     departmentId?: string;
+    planId?: string;
     paperIds?: string[];
   }): Promise<Subscription> {
     const subscription = new this.subscriptionModel({
