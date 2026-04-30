@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { PaymentGatewayFactory } from './payment-gateway.factory';
@@ -26,6 +26,18 @@ export class PaymentsService {
     
     if (!plan) {
       throw new NotFoundException(`Plan ${planId} not found or inactive`);
+    }
+
+    // Check if user already has an active subscription for this plan
+    const existingSubscriptions = await this.subscriptionsService.findActiveSubscription(userId);
+    const hasActivePlan = existingSubscriptions.some(
+      (sub) => sub.planId === planId && sub.status === 'active' && new Date(sub.endDate) > new Date()
+    );
+
+    if (hasActivePlan) {
+      throw new ConflictException(
+        `You already have an active subscription for this plan. Please wait until it expires before purchasing again.`
+      );
     }
 
     const gateway = this.gatewayFactory.getGateway();
