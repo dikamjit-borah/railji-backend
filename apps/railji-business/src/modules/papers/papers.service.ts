@@ -263,11 +263,12 @@ export class PapersService {
       // Build the query with departmentId and any additional filters
       const { page: _, limit: __, sortBy, sortOrder, ...filterQuery } = query || {};
       
-      // Build query based only on provided filters
-      const searchQuery = {
-        ...(query.paperType !== 'general' && { departmentId }),
-        ...filterQuery,
-      };
+      // Build query based on paper type
+      // If paperType is general, only apply paperCode filter
+      // Otherwise, apply all filters including departmentId
+      const searchQuery = query?.paperType === 'general'
+        ? { paperType: 'general', ...(query.paperCode && { paperCode: query.paperCode }) }
+        : { departmentId, ...filterQuery };
 
 
       // Fetch designations and paper codes in parallel
