@@ -19,49 +19,57 @@ export class PaymentsService {
   ) {}
 
   async createOrder(planId: string, userId: string, metadata: Record<string, any> = {}) {
-    this.logger.log(`Creating order for plan: ${planId}`);
+    try {
+      this.logger.log(`Creating order for plan: ${planId}`);
 
-    // Fetch plan details
-    const plan = await this.planModel.findOne({ planId, isActive: true }).exec();
-    
-    if (!plan) {
-      throw new NotFoundException(`Plan ${planId} not found or inactive`);
-    }
+      // Fetch plan details
+      const plan = await this.planModel.findOne({ planId, isActive: true }).exec();
+      
+      if (!plan) {
+        throw new NotFoundException(`Plan ${planId} not found or inactive`);
+      }
 
-    // Check if user already has an active subscription for this plan
-    const existingSubscriptions = await this.subscriptionsService.findActiveSubscription(userId);
-    const hasActivePlan = existingSubscriptions.some(
-      (sub) => sub.planId === planId && sub.status === 'active' && new Date(sub.endDate) > new Date()
-    );
-
-    if (hasActivePlan) {
-      throw new ConflictException(
-        `You already have an active subscription for this plan. Please wait until it expires before purchasing again.`
+      // Check if user already has an active subscription for this plan
+      const existingSubscriptions = await this.subscriptionsService.findActiveSubscription(userId);
+      const hasActivePlan = existingSubscriptions.some(
+        (sub) => sub.planId === planId && sub.status === 'active' && new Date(sub.endDate) > new Date()
       );
+
+      if (hasActivePlan) {
+        throw new ConflictException(
+          `You already have an active subscription for this plan. Please wait until it expires before purchasing again.`
+        );
+      }
+
+      const gateway = this.gatewayFactory.getGateway();
+      const gatewayType = this.gatewayFactory.getActiveGatewayType();
+
+      // Add plan and user info to metadata
+      const orderMetadata = {
+        ...metadata,
+        planId: plan.planId,
+        departmentId: plan.departmentId,
+        userId,
+        durationMonths: plan.durationMonths,
+        price: plan.price,
+      };
+
+      this.logger.log(`Creating order with gateway: ${gatewayType}`);
+      const order = await gateway.createOrder(plan.price, plan.currency, orderMetadata);
+      this.logger.log(`Gateway order created: ${order.orderId}`);
+
+      await this.transactionService.logOrderCreation(gatewayType, order, {
+        userId,
+        customerEmail: metadata.email,
+        customerPhone: metadata.phone,
+      });
+
+      this.logger.log(`Transaction logged for order: ${order.orderId}`);
+      return order;
+    } catch (error) {
+      this.logger.error(`Error in createOrder: ${error.message}`, error.stack);
+      throw error;
     }
-
-    const gateway = this.gatewayFactory.getGateway();
-    const gatewayType = this.gatewayFactory.getActiveGatewayType();
-
-    // Add plan and user info to metadata
-    const orderMetadata = {
-      ...metadata,
-      planId: plan.planId,
-      departmentId: plan.departmentId,
-      userId,
-      durationMonths: plan.durationMonths,
-      price: plan.price,
-    };
-
-    const order = await gateway.createOrder(plan.price, plan.currency, orderMetadata);
-
-    await this.transactionService.logOrderCreation(gatewayType, order, {
-      userId,
-      customerEmail: metadata.email,
-      customerPhone: metadata.phone,
-    });
-
-    return order;
   }
 
   async verifyPayment(orderId: string, paymentId: string, signature: string): Promise<boolean> {

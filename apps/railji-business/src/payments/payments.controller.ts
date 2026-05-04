@@ -31,20 +31,28 @@ export class PaymentsController {
   @Post('order')
   @HttpCode(HttpStatus.CREATED)
   async createOrder(@Body() createOrderDto: CreateOrderDto, @Req() req: any) {
-    this.logger.log('Creating order');
-    
-    const user = await this.usersService.getUserFromRequest(req);
-    const userId = user.userId;
-    
-    if (!userId) {
-      throw new ForbiddenException('User not authenticated');
-    }
+    try {
+      this.logger.log('Creating order');
+      
+      const user = await this.usersService.getUserFromRequest(req);
+      const userId = user.userId;
+      
+      if (!userId) {
+        throw new ForbiddenException('User not authenticated');
+      }
 
-    return this.paymentsService.createOrder(
-      createOrderDto.planId,
-      userId,
-      createOrderDto.metadata || {},
-    );
+      const result = await this.paymentsService.createOrder(
+        createOrderDto.planId,
+        userId,
+        createOrderDto.metadata || {},
+      );
+
+      this.logger.log(`Order created successfully: ${result.orderId}`);
+      return result;
+    } catch (error) {
+      this.logger.error(`Failed to create order: ${error.message}`, error.stack);
+      throw error;
+    }
   }
 
   @Post('verify')

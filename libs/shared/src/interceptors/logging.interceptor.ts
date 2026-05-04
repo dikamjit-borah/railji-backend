@@ -37,26 +37,34 @@ export class LoggingInterceptor implements NestInterceptor {
 
         // Log only on development or for debugging
         if (process.env.NODE_ENV === 'development') {
-          this.logger.debug(
-            JSON.stringify({
-              method,
-              url,
-              statusCode,
-              duration,
-              query,
-              params,
-              //body: this.sanitizeBody(body),
-            }, null, 2)
-          );
+          try {
+            this.logger.debug(
+              JSON.stringify({
+                method,
+                url,
+                statusCode,
+                duration,
+                query,
+                params,
+                //body: this.sanitizeBody(body),
+              }, null, 2)
+            );
+          } catch (err) {
+            this.logger.warn(`Failed to serialize debug log: ${err.message}`);
+          }
         }
       }),
       catchError((error) => {
         const duration = Date.now() - startTime;
         const statusCode = response.statusCode || 500;
 
+        // Better error logging with fallbacks
+        const errorMessage = error?.message || error?.toString() || 'Unknown error';
+        const errorStack = error?.stack || JSON.stringify(error, null, 2);
+
         this.logger.error(
-          `${method} ${url} - ${statusCode} - ${duration}ms - ${error.message}`,
-          error.stack,
+          `${method} ${url} - ${statusCode} - ${duration}ms - ${errorMessage}`,
+          errorStack,
           'HTTP Request',
         );
 
