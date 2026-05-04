@@ -73,6 +73,10 @@ export class CreatePaperDto {
   @IsEnum(['general', 'sectional', 'full'])
   paperType: string;
 
+  @IsOptional()
+  @IsString()
+  designation?: string;
+
   @IsString()
   name: string;
 

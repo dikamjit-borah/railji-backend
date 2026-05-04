@@ -76,6 +76,10 @@ export class UpdatePaperDto {
 
   @IsOptional()
   @IsString()
+  designation?: string;
+
+  @IsOptional()
+  @IsString()
   name?: string;
 
   @IsOptional()

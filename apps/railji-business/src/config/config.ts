@@ -12,6 +12,10 @@ export const config = {
   database: {
     uri: process.env.MONGODB_URI,
   },
+  supabase: {
+    url: process.env.SUPABASE_URL,
+    jwtAudience: process.env.SUPABASE_JWT_AUDIENCE || 'authenticated',
+  },
   jwt: {
     secret: process.env.JWT_SECRET,
     expiresIn: process.env.JWT_EXPIRATION || '7d',
@@ -19,5 +23,21 @@ export const config = {
   logging: {
     level: process.env.LOG_LEVEL || 'debug',
     maxFiles: process.env.LOG_MAX_FILES || '14',
+  },
+  payment: {
+    gateway: process.env.PAYMENT_GATEWAY || 'razorpay',
+    razorpay: {
+      keyId: process.env.RAZORPAY_KEY_ID || '',
+      keySecret: process.env.RAZORPAY_KEY_SECRET || '',
+      webhookSecret: process.env.RAZORPAY_WEBHOOK_SECRET || '',
+    },
+    stripe: {
+      secretKey: process.env.STRIPE_SECRET_KEY || '',
+      webhookSecret: process.env.STRIPE_WEBHOOK_SECRET || '',
+    },
+    payu: {
+      merchantKey: process.env.PAYU_MERCHANT_KEY || '',
+      merchantSalt: process.env.PAYU_MERCHANT_SALT || '',
+    },
   },
 };

@@ -6,7 +6,10 @@ import { config } from './config/config';
 import { API_PREFIX } from './constants/app.constants';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    rawBody: true, // Enable raw body for webhook signature verification
+    bodyParser: true,
+  });
 
   // Setup Logger
   const loggerService = app.get(LoggerServiceProvider);
@@ -24,18 +27,32 @@ async function bootstrap() {
     }),
   );
 
-  // Enable CORS (optional)
+  // Enable CORS
+  const isProduction = process.env.NODE_ENV === 'stage' || process.env.NODE_ENV === 'production';
+  const corsOrigin = process.env.CORS_ORIGIN;
+  
   app.enableCors({
-    origin: process.env.CORS_ORIGIN || '*',
+    origin: isProduction ? (corsOrigin ? corsOrigin.split(',').map(o => o.trim()) : true) : true,
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin', 'sec-ch-ua', 'sec-ch-ua-mobile', 'sec-ch-ua-platform'],
+    exposedHeaders: ['Content-Length', 'Content-Type'],
+    maxAge: 3600,
   });
+
+  loggerService.log(
+    isProduction 
+      ? `CORS: Production mode (${corsOrigin || 'all origins'})` 
+      : 'CORS: Development mode (all origins, no credentials)',
+    'Bootstrap'
+  );
 
   // Global prefix
   app.setGlobalPrefix(API_PREFIX);
 
-  await app.listen(config.app.port, () => {
+  await app.listen(config.app.port, '0.0.0.0', () => {
     loggerService.log(
-      `Railji Business running on http://localhost:${config.app.port}`,
+      `Railji Business running on http://0.0.0.0:${config.app.port}`,
       'Bootstrap',
     );
     loggerService.log(

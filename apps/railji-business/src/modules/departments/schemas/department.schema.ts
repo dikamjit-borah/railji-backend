@@ -12,9 +12,6 @@ export class Department extends Document {
   @Prop({ required: true })
   name: string;
 
-  @Prop({ required: true })
-  fullName: string;
-
   @Prop()
   description: string;
 
@@ -29,6 +26,9 @@ export class Department extends Document {
 
   @Prop({ default: 0 })
   materialCount: number;
+
+  @Prop({ default: true })
+  isActive: boolean;
 
   @Prop({ default: Date.now })
   createdAt: Date;

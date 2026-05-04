@@ -1,10 +1,12 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, HttpException, HttpStatus } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Paper, QuestionBank } from '@railji/shared';
 import { CacheService, ErrorHandlerService } from '@railji/shared';
-import { cleanObjectArrays, ensureCleanArray } from '../../utils/utils';
+import { calculateSkip, pagination, cleanObjectArrays, ensureCleanArray } from '@railji/shared';
 import { FetchPapersQueryDto } from './dto/paper.dto';
+import { UsersService } from '../users/users.service';
+import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 
 export interface PaperCodesByType {
   general: string[];
@@ -24,6 +26,8 @@ export class PapersService {
     private questionBankModel: Model<QuestionBank>,
     private readonly cacheService: CacheService,
     private readonly errorHandler: ErrorHandlerService,
+    private readonly usersService: UsersService,
+    private readonly subscriptionsService: SubscriptionsService,
   ) {}
 
   private generateCacheKey(departmentId: string, filters?: any): string {
@@ -34,6 +38,42 @@ export class PapersService {
   clearAllCache(): void {
     this.cacheService.clear();
     this.logger.debug('Cleared all paper codes cache and top papers cache');
+  }
+
+  async designationsForDepartment(departmentId: string): Promise<string[]> {
+    try {
+      const cacheKey = `designations:${departmentId}`;
+
+      // Check cache first
+      /* const cached = this.cacheService.get<string[]>(cacheKey);
+      if (cached) {
+        this.logger.debug(`Returning cached designations for department: ${departmentId}`);
+        return cached;
+      } */
+
+      // Fetch distinct designations for the department
+      const designations = await this.paperModel
+        .distinct('designation', {
+          $or: [
+            { paperType: 'general' },
+            { departmentId, paperType: { $ne: 'general' } },
+          ],
+        })
+        .exec();
+
+      // Clean and sort designations
+      const cleanedDesignations = ensureCleanArray(designations.filter((p): p is string => typeof p === 'string')).sort();
+
+      // Cache the results
+      this.cacheService.set(cacheKey, cleanedDesignations, this.DEFAULT_TTL);
+      this.logger.debug(`Cached ${cleanedDesignations.length} designations for department: ${departmentId}`);
+
+      return cleanedDesignations;
+    } catch (error) {
+      this.errorHandler.handle(error, {
+        context: 'PapersService.designationsForDepartment',
+      });
+    }
   }
 
   async findAll(query?: any): Promise<Paper[]> {
@@ -55,8 +95,26 @@ export class PapersService {
         return cached;
       }
 
-      // Fetch from database
-      const papers = await this.paperModel.find().limit(6).exec();
+      // Fetch from database - only general papers with unique paperCode
+      const papers = await this.paperModel
+        .aggregate([
+          {
+            $match: { paperType: 'general', isFree: true },
+          },
+          {
+            $group: {
+              _id: '$paperCode',
+              paper: { $first: '$$ROOT' },
+            },
+          },
+          {
+            $replaceRoot: { newRoot: '$paper' },
+          },
+          {
+            $limit: 5,
+          },
+        ])
+        .exec();
 
       // Cache the result
       this.cacheService.set(
@@ -74,7 +132,7 @@ export class PapersService {
     }
   }
 
-  async findById(paperId: string): Promise<Paper> {
+  async findByPaperId(paperId: string): Promise<Paper> {
     try {
       const paper = await this.paperModel.findOne({ paperId }).exec();
       if (!paper) {
@@ -82,40 +140,47 @@ export class PapersService {
       }
       return paper;
     } catch (error) {
-      this.errorHandler.handle(error, { context: 'PapersService.findById' });
+      this.errorHandler.handle(error, { context: 'papersService.findByPaperId' });
     }
   }
 
-  async fetchPaperCodesByType(departmentId: string): Promise<PaperCodesByType> {
+  async paperCodesForDepartmentAndDesignation(
+    departmentId: string,
+    designations?: string,
+  ): Promise<PaperCodesByType> {
     try {
-      const cacheKey = this.generateCacheKey(departmentId);
+      const cacheKey = this.generateCacheKey(departmentId, { designations });
 
       // Check if paper codes are already cached
       /* const cached = this.cacheService.get<PaperCodesByType>(cacheKey);
       if (cached) {
         this.logger.debug(
-          `Returning cached paper codes for department: ${departmentId}`,
+          `Returning cached paper codes for department: ${departmentId}, designations: ${designations}`,
         );
         return cached;
       } */
+
+      // Build match conditions
+      const matchConditions: any = {
+        $or: [
+          // General papers from entire collection (no department filter, no designation filter)
+          {
+            paperType: 'general',
+          },
+          // Non-general papers from specific department only
+          {
+            departmentId,
+            paperType: { $ne: 'general' },
+            ...(designations && { designation: designations }),
+          },
+        ],
+      };
 
       // Single aggregation with conditional logic for general vs non-general papers
       const result = await this.paperModel
         .aggregate([
           {
-            $match: {
-              $or: [
-                // General papers from entire collection (no department filter)
-                {
-                  paperType: 'general',
-                },
-                // Non-general papers from specific department only
-                {
-                  departmentId,
-                  paperType: { $ne: 'general' },
-                },
-              ],
-            },
+            $match: matchConditions,
           },
           {
             $group: {
@@ -167,13 +232,13 @@ export class PapersService {
       // Cache the results
       this.cacheService.set(cacheKey, cleanedPaperCodes, this.DEFAULT_TTL);
       this.logger.debug(
-        `Cached ${cleanedPaperCodes.general.length} general and ${cleanedPaperCodes.nonGeneral.length} non-general paper codes for department: ${departmentId}`,
+        `Cached ${cleanedPaperCodes.general.length} general and ${cleanedPaperCodes.nonGeneral.length} non-general paper codes for department: ${departmentId}${designations ? `, designations: ${designations}` : ''}`,
       );
 
       return cleanedPaperCodes;
     } catch (error) {
       this.errorHandler.handle(error, {
-        context: 'PapersService.fetchPaperCodesByType',
+        context: 'PapersService.paperCodesForDepartmentAndDesignation',
       });
     }
   }
@@ -183,25 +248,34 @@ export class PapersService {
     page: number = 1,
     limit: number = 10,
     query?: FetchPapersQueryDto,
+    userId?: string,
   ): Promise<{
+    designations: string[];
     paperCodes: PaperCodesByType;
-    papers: Paper[];
+    papers: any[];
     total: number;
     page: number;
     totalPages: number;
   }> {
     try {
-      const skip = (page - 1) * limit;
+      const skip = calculateSkip(page, limit);
 
       // Build the query with departmentId and any additional filters
       const { page: _, limit: __, sortBy, sortOrder, ...filterQuery } = query || {};
-      const searchQuery = {
-        ...(query.paperType !== 'general' && { departmentId }),
-        ...filterQuery,
-      };
+      
+      // Build query based on paper type
+      // If paperType is general, only apply paperCode filter
+      // Otherwise, apply all filters including departmentId
+      const searchQuery = query?.paperType === 'general'
+        ? { paperType: 'general', ...(query.paperCode && { paperCode: query.paperCode }) }
+        : { departmentId, ...filterQuery };
 
-      // Get cached paper codes by type
-      const paperCodes = await this.fetchPaperCodesByType(departmentId);
+
+      // Fetch designations and paper codes in parallel
+      const [designations, paperCodes] = await Promise.all([
+        this.designationsForDepartment(departmentId),
+        this.paperCodesForDepartmentAndDesignation(departmentId, query?.designation),
+      ]);
 
       // Build sort options
       const sortOptions: any = {};
@@ -237,14 +311,38 @@ export class PapersService {
         this.paperModel.countDocuments(searchQuery).exec(),
       ]);
 
-      const totalPages = Math.ceil(total / limit);
+      // userId is already provided as parameter
+      // Add hasAccess field to each paper
+      const papersWithAccess = await Promise.all(
+        papers.map(async (paper) => {
+          let hasAccess = false;
+
+          // If paper is free, user has access
+          if (paper.isFree === true) {
+            hasAccess = true;
+          } else if (userId) {
+            // Check if user has access to this paper (either paper-level or department-level subscription)
+            // For general papers, users with any department access should have access
+            hasAccess = await this.subscriptionsService.hasAccessToPaper(
+              userId,
+              paper.paperId,
+              paper.departmentId,
+              paper.paperType === 'general',
+            );
+          }
+
+          return {
+            ...paper.toObject(),
+            hasAccess,
+          };
+        })
+      );
 
       return {
+        designations,
         paperCodes,
-        papers,
-        total,
-        page,
-        totalPages,
+        papers: papersWithAccess,
+        ...pagination(page, limit, total),
       };
     } catch (error) {
       this.errorHandler.handle(error, {
@@ -288,6 +386,7 @@ export class PapersService {
       if (!result || result.length === 0) {
         throw new NotFoundException(`Questions not found for paper ${paperId}`);
       }
+
       return result[0];
     } catch (error) {
       this.errorHandler.handle(error, {

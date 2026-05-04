@@ -9,7 +9,7 @@ export class User extends Document {
   @Prop({})
   password: string;
 
-  @Prop({ enum: ['admin', 'user'] })
+  @Prop({ enum: ['superadmin', 'admin', 'user'] })
   userType: string;
 
   @Prop({ unique: true, sparse: true })
@@ -21,11 +21,17 @@ export class User extends Document {
   @Prop()
   email?: string;
 
+  @Prop({ default: true })
+  isActive: boolean;
+
   @Prop({ default: Date.now })
   createdAt: Date;
 
   @Prop({ default: Date.now })
   updatedAt: Date;
+
+  @Prop()
+  lastLoggedIn?: Date;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

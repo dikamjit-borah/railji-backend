@@ -8,80 +8,72 @@ import {
 } from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
 
-import { isEmpty } from 'lodash';
+@Catch()
+export class ErrorInterceptor implements ExceptionFilter {
+  private readonly logger = new Logger(ErrorInterceptor.name);
+
+  constructor(private readonly httpAdapterHost: HttpAdapterHost) {}
+
+  catch(exception: any, host: ArgumentsHost) {
+    const { httpAdapter } = this.httpAdapterHost;
+    const ctx = host.switchToHttp();
+    const request = ctx.getRequest();
+
+    let httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+    let message = 'Internal server error';
+    let error: string | undefined;
+
+    if (exception instanceof HttpException) {
+      httpStatus = exception.getStatus();
+      const res = exception.getResponse();
+      if (typeof res === 'string') {
+        message = res;
+        error = exception.name;
+      } else if (typeof res === 'object') {
+        message = (res as any).message || exception.message;
+        error = (res as any).error || exception.name;
+      }
+    } else if (typeof exception?.getStatus === 'function') {
+      // Fallback: if it has getStatus method but instanceof failed
+      httpStatus = exception.getStatus();
+      const res = exception.getResponse?.();
+      if (typeof res === 'string') {
+        message = res;
+        error = exception.name;
+      } else if (typeof res === 'object') {
+        message = (res as any).message || exception.message;
+        error = (res as any).error || exception.name;
+      } else {
+        message = exception.message || message;
+        error = exception.name;
+      }
+    } else if (exception?.message) {
+      message = exception.message;
+      error = exception.name;
+    }
+
+    if (httpStatus >= 500) {
+      this.logger.error(`${request.method} ${request.url} - ${httpStatus} - ${message}`, exception.stack);
+    } else {
+      this.logger.warn(`${request.method} ${request.url} - ${httpStatus} - ${message}`);
+    }
+
+    httpAdapter.reply(ctx.getResponse(), {
+      success: false,
+      statusCode: httpStatus,
+      message,
+      ...(error && { error }),
+      timestamp: new Date().toISOString(),
+      path: request.url,
+    }, httpStatus);
+  }
+}
 
 export interface ErrorResponse {
   success: false;
   statusCode: number;
   message: string;
-  error: string;
+  error?: string;
   timestamp: string;
   path: string;
-}
-
-/**
- * The ErrorInterceptor filters all the uncaught exceptions generated
- * through the application
- */
-@Catch()
-export class ErrorInterceptor implements ExceptionFilter {
-  /**
-   * The parameterized constructor
-   * @param httpAdapterHost {@link HttpAdapterHost}
-   * @param requestContextProvider {@link RequestContextService}
-   */
-  constructor(
-    private readonly httpAdapterHost: HttpAdapterHost,
-    //private readonly requestContextProvider: RequestContextService,
-  ) {}
-
-  /**
-   * ExceptionFilter catch method, handles all the uncaught exceptions
-   * generated throughout the application.
-   * The uncaught exceptions returned with a standard format
-   *
-   * @param exception any
-   * @param host ArgumentsHost
-   */
-  catch(exception: any, host: ArgumentsHost) {
-    const { httpAdapter } = this.httpAdapterHost;
-
-    const ctx = host.switchToHttp();
-    const message = isEmpty(exception?.message)
-      ? exception
-      : JSON.stringify(exception?.message);
-    //const stack = isEmpty(exception?.stack) ? exception : exception.stack;
-    const errorMessage = message
-      ? { message }
-      : { message: 'Something went wrong' };
-    const errorResponse = exception?.response
-      ? exception?.response
-      : errorMessage;
-    const error = {
-      ...errorResponse,
-      //stack,
-    };
-    const httpStatus =
-      exception instanceof HttpException
-        ? exception.getStatus()
-        : HttpStatus.INTERNAL_SERVER_ERROR;
-
-    const responseBody = {
-      success: false,
-      message,
-      statusCode: httpStatus,
-      time: new Date().toISOString(),
-      //identifier: this.requestContextProvider.get('requestId'),
-      error,
-    };
-    Logger.log('API  Error response', JSON.stringify(responseBody));
-    Logger.error(
-      `Exception caught by ErrorInterceptor: ${message}`,
-      exception.stack,
-    );
-
-    //this.serviceRequestLogger.logRequest(ctx, responseBody);
-
-    httpAdapter.reply(ctx.getResponse(), responseBody, httpStatus);
-  }
 }

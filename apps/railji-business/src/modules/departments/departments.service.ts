@@ -4,6 +4,8 @@ import { Model } from 'mongoose';
 import { Department } from './schemas/department.schema';
 import { Material } from './schemas/material.schema';
 import { CacheService, ErrorHandlerService } from '@railji/shared';
+import { UsersService } from '../users/users.service';
+import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 
 @Injectable()
 export class DepartmentsService {
@@ -18,38 +20,60 @@ export class DepartmentsService {
     private readonly materialModel: Model<Material>,
     private readonly cacheService: CacheService,
     private readonly errorHandler: ErrorHandlerService,
+    private readonly usersService: UsersService,
+    private readonly subscriptionsService: SubscriptionsService,
   ) {}
 
-  async fetchAllDepartments(query?: any): Promise<Department[]> {
+  async fetchAllDepartments(query?: any, userId?: string): Promise<any[]> {
     try {
-      const cacheKey = `${this.DEPARTMENTS_CACHE_KEY}`;
+      // Cache key for departments (without user-specific data)
+      const departmentsCacheKey = `${this.DEPARTMENTS_CACHE_KEY}`;
 
-      // Check cache first
-      const cached = this.cacheService.get<Department[]>(cacheKey);
+      // Check cache for departments first
+      let departments = this.cacheService.get<Department[]>(departmentsCacheKey);
 
-      if (cached) {
+      if (!departments) {
+        // Fetch from database if not cached - only active departments
+        const filterQuery = { ...query, isActive: true };
+        departments = await this.departmentModel
+          .find(filterQuery)
+          .sort({ departmentId: 1 })
+          .exec();
+
+        if (!departments || departments.length === 0) {
+          throw new NotFoundException('No departments found');
+        }
+
+        // Cache the departments (without access info)
+        this.cacheService.set(departmentsCacheKey, departments, this.CACHE_TTL);
+        this.logger.debug(
+          `Cached departments data with ${departments.length} departments`,
+        );
+      } else {
         this.logger.debug('Returning cached departments data');
-        return cached;
       }
 
-      // Fetch from database
-      const departments = await this.departmentModel
-        .find(query || {})
-        .sort({ departmentId: 1 })
-        .exec();
+      // userId is already provided as parameter
+      // Add hasAccess field to each department
+      const departmentsWithAccess = await Promise.all(
+        departments.map(async (department) => {
+          let hasAccess = false;
 
-      if (!departments || departments.length === 0) {
-        throw new NotFoundException('No departments found');
-      }
+          if (userId) {
+            // Check if user has access to this department
+            const userAccessibleDepartments = await this.subscriptionsService.getUserAccessibleDepartments(userId);
+            hasAccess = userAccessibleDepartments.includes(department.departmentId);
+          }
 
-      // Cache the result
-      this.cacheService.set(cacheKey, departments, this.CACHE_TTL);
-      this.logger.debug(
-        `Cached departments data with ${departments.length} departments`,
+          return {
+            ...department.toObject(),
+            hasAccess,
+          };
+        })
       );
 
       this.logger.log(`Found ${departments.length} departments`);
-      return departments;
+      return departmentsWithAccess;
     } catch (error) {
       this.errorHandler.handle(error, {
         context: 'DepartmentsService.fetchAllDepartments',
