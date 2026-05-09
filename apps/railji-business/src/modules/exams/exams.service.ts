@@ -259,7 +259,7 @@ export class ExamsService implements IOwnershipService {
       const dateFilter = buildDateFilter(query.startDate, query.endDate);
       const filter: Record<string, any> = {
         userId,
-        examMode: 'live',
+        //examMode: 'live', pramod need to show both live/mock together
         ...dateFilter,
       };
 
