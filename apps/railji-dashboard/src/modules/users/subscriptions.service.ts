@@ -30,6 +30,64 @@ export class SubscriptionsService extends SharedSubscriptionsService {
     }
   }
 
+  async getAllSubscriptions(page: number, limit: number): Promise<{ subscriptions: any[], total: number }> {
+    try {
+      const skip = (page - 1) * limit;
+      
+      const [subscriptions, total] = await Promise.all([
+        this.subscriptionModel.aggregate([
+          {
+            $lookup: {
+              from: 'users',
+              localField: 'userId',
+              foreignField: 'userId',
+              as: 'userDetails',
+            },
+          },
+          {
+            $unwind: {
+              path: '$userDetails',
+              preserveNullAndEmptyArrays: true,
+            },
+          },
+          {
+            $project: {
+              _id: 1,
+              userId: 1,
+              accessType: 1,
+              departmentId: 1,
+              paperIds: 1,
+              startDate: 1,
+              endDate: 1,
+              status: 1,
+              description: 1,
+              createdAt: 1,
+              updatedAt: 1,
+              'userDetails.userId': 1,
+              'userDetails.email': 1,
+              'userDetails.name': 1,
+              'userDetails.phoneNumber': 1,
+              'userDetails.userType': 1,
+              'userDetails.isActive': 1,
+            },
+          },
+          { $sort: { createdAt: -1 } },
+          { $skip: skip },
+          { $limit: limit },
+        ]).exec(),
+        this.subscriptionModel.countDocuments().exec(),
+      ]);
+
+      return { subscriptions, total };
+    } catch (error) {
+      this.errorHandler.handle(error, {
+        context: 'SubscriptionsService.getAllSubscriptions',
+        page,
+        limit,
+      });
+    }
+  }
+
   async revokeAccess(userId: string, departmentId?: string, paperId?: string, adminId?: string): Promise<{ modifiedSubscriptions: Subscription[], message: string }> {
     try {
       if (!departmentId && !paperId) {

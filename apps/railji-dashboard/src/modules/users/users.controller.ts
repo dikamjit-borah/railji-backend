@@ -86,6 +86,28 @@ export class UsersController {
     };
   }
 
+  @Get('subscriptions')
+  @HttpCode(HttpStatus.OK)
+  async getAllSubscriptions(
+    @Query('page') page: string = '1',
+    @Query('limit') limit: string = '10',
+  ) {
+    const { page: normalizedPage, limit: normalizedLimit } = paginate(page, limit);
+    const result = await this.subscriptionsService.getAllSubscriptions(normalizedPage, normalizedLimit);
+    return {
+      message: 'All subscriptions retrieved successfully',
+      data: {
+        subscriptions: result.subscriptions,
+        pagination: {
+          page: normalizedPage,
+          limit: normalizedLimit,
+          total: result.total,
+          totalPages: Math.ceil(result.total / normalizedLimit),
+        },
+      },
+    };
+  }
+
   @Get(':userId/subscriptions')
   @HttpCode(HttpStatus.OK)
   async getUserSubscriptions(@Param('userId') userId: string) {
