@@ -7,6 +7,7 @@ import {
   IsBoolean,
   ValidateNested,
   ArrayMinSize,
+  ArrayMaxSize,
   ValidateIf,
 } from 'class-validator';
 import { Type } from 'class-transformer';
@@ -46,7 +47,8 @@ class QuestionDto {
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => OptionDto)
-  @ArrayMinSize(4)
+  @ArrayMinSize(2)
+  @ArrayMaxSize(4)
   options: OptionDto[];
 
   @IsNumber()
